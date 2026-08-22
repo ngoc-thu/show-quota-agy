@@ -68,8 +68,9 @@ class SettingsView(Adw.PreferencesPage):
             subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
         )
         display_options = [
-            (DisplayMode.COMBINED_5H_WEEKLY.value, "Hạn mức 5h & Tuần (5h: XX% | Tuần: YY%) — Khuyến nghị"),
-            (DisplayMode.LOWEST.value, "Chỉ hiển thị % thấp nhất (XX%)"),
+            (DisplayMode.MINI_BARS.value, "Biểu đồ Mini Bar: 5h [▰▰▰▱] 74% | Tuần [▰▰▰▰] 79% (Khuyến nghị)"),
+            (DisplayMode.COMBINED_5H_WEEKLY.value, "Dạng số rút gọn: 5h 74% | Tuần 79%"),
+            (DisplayMode.LOWEST.value, "Chỉ hiển thị % thấp nhất"),
             (DisplayMode.ACTIVE.value, "Model đang chọn / mặc định"),
             (DisplayMode.GEMINI_ALL.value, "Gemini: Cả 5h & Tuần"),
             (DisplayMode.CLAUDE_ALL.value, "Claude/GPT: Cả 5h & Tuần"),
@@ -161,6 +162,7 @@ class SettingsView(Adw.PreferencesPage):
 
     def _on_display_mode_changed(self, row, param):
         modes = [
+            DisplayMode.MINI_BARS,
             DisplayMode.COMBINED_5H_WEEKLY,
             DisplayMode.LOWEST,
             DisplayMode.ACTIVE,

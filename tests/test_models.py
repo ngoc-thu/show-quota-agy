@@ -78,6 +78,10 @@ class TestModels(unittest.TestCase):
         self.assertEqual(snapshot.get_display_label(DisplayMode.COMBINED_5H_WEEKLY), "5h: 74% | Tuần: 81%")
         self.assertEqual(snapshot.get_display_percentage(DisplayMode.COMBINED_5H_WEEKLY), 74.0)
 
+        # Mini Bars mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.MINI_BARS), "5h: [▰▰▰▱] 74% | Tuần: [▰▰▰▱] 81%")
+        self.assertEqual(snapshot.get_display_percentage(DisplayMode.MINI_BARS), 74.0)
+
 
 if __name__ == "__main__":
     unittest.main()

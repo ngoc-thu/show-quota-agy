@@ -45,7 +45,7 @@ class TopBarIndicator:
             icon_theme_path,
         )
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
-        self.indicator.set_label("...", "5h: 100% | Tuần: 100%")
+        self.indicator.set_label("...", "5h: [▰▰▰▰] 100% | Tuần: [▰▰▰▰] 100%")
 
         # Subscribe to service snapshot updates
         self.service.add_listener(self._on_snapshot_updated)
@@ -78,7 +78,7 @@ class TopBarIndicator:
         else:
             label = "..."
 
-        self.indicator.set_label(label, "5h: 100% | Tuần: 100%")
+        self.indicator.set_label(label, "5h: [▰▰▰▰] 100% | Tuần: [▰▰▰▰] 100%")
 
         # 2. Update Popup Menu
         menu = TrayMenuBuilder.build_menu(

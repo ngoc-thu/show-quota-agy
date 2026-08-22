@@ -56,8 +56,17 @@ class ConnectionState(str, Enum):
         return "⚠ Connection Error"
 
 
+def render_mini_bar(percentage: float, width: int = 4) -> str:
+    """Generates a compact mini progress bar e.g. ▰▰▰▱."""
+    pct = max(0.0, min(100.0, float(percentage)))
+    filled = int(round((pct / 100.0) * width))
+    empty = width - filled
+    return "▰" * filled + "▱" * empty
+
+
 class DisplayMode(str, Enum):
-    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: XX% | Tuần: YY% (Khuyến nghị)
+    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▱] 74% | Tuần: [▰▰▰▰] 79% (Khuyến nghị)
+    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: 74% | Tuần: 79% (Dạng số)
     LOWEST = "lowest"                          # Model thấp nhất
     ACTIVE = "active"                          # Model mặc định / đang active
     GEMINI_ALL = "gemini_all"                  # Gemini: Cả 5h & Tuần
@@ -200,7 +209,7 @@ class QuotaSnapshot:
                         p_weekly = b.percentage
         return p_5h, p_weekly
 
-    def get_display_percentage(self, mode: DisplayMode = DisplayMode.COMBINED_5H_WEEKLY) -> float:
+    def get_display_percentage(self, mode: DisplayMode = DisplayMode.MINI_BARS) -> float:
         if mode == DisplayMode.ACTIVE:
             act = self.active_model
             return act.percentage if act else 0.0
@@ -218,7 +227,7 @@ class QuotaSnapshot:
             p_5h, p_wk = self.get_group_5h_and_weekly("claude")
             vals = [v for v in (p_5h, p_wk) if v is not None]
             return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
-        elif mode == DisplayMode.COMBINED_5H_WEEKLY:
+        elif mode in (DisplayMode.MINI_BARS, DisplayMode.COMBINED_5H_WEEKLY):
             p_5h, p_wk = self.get_5h_and_weekly()
             vals = [v for v in (p_5h, p_wk) if v is not None]
             return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
@@ -226,8 +235,26 @@ class QuotaSnapshot:
         low = self.lowest_model
         return low.percentage if low else 0.0
 
-    def get_display_label(self, mode: DisplayMode = DisplayMode.COMBINED_5H_WEEKLY) -> str:
-        if mode == DisplayMode.COMBINED_5H_WEEKLY:
+    def get_display_label(self, mode: DisplayMode = DisplayMode.MINI_BARS) -> str:
+        if mode == DisplayMode.MINI_BARS:
+            l_5h, l_wk = self.get_5h_and_weekly()
+            if l_5h is not None and l_wk is not None:
+                b_5h = render_mini_bar(l_5h, width=4)
+                b_wk = render_mini_bar(l_wk, width=4)
+                return f"5h: [{b_5h}] {l_5h:.0f}% | Tuần: [{b_wk}] {l_wk:.0f}%"
+            elif l_5h is not None:
+                b_5h = render_mini_bar(l_5h, width=4)
+                return f"5h: [{b_5h}] {l_5h:.0f}%"
+            elif l_wk is not None:
+                b_wk = render_mini_bar(l_wk, width=4)
+                return f"Tuần: [{b_wk}] {l_wk:.0f}%"
+            low = self.lowest_model
+            if low:
+                b_low = render_mini_bar(low.percentage, width=4)
+                return f"[{b_low}] {low.percentage:.0f}%"
+            return "100%"
+
+        elif mode == DisplayMode.COMBINED_5H_WEEKLY:
             l_5h, l_wk = self.get_5h_and_weekly()
             if l_5h is not None and l_wk is not None:
                 return f"5h: {l_5h:.0f}% | Tuần: {l_wk:.0f}%"
@@ -241,34 +268,46 @@ class QuotaSnapshot:
         elif mode == DisplayMode.GEMINI_ALL:
             g_5h, g_wk = self.get_group_5h_and_weekly("gemini")
             if g_5h is not None and g_wk is not None:
-                return f"G: 5h {g_5h:.0f}% | Tuần {g_wk:.0f}%"
+                b_5h = render_mini_bar(g_5h, width=4)
+                b_wk = render_mini_bar(g_wk, width=4)
+                return f"G: [{b_5h}] 5h {g_5h:.0f}% | [{b_wk}] Tuần {g_wk:.0f}%"
             elif g_5h is not None:
-                return f"Gemini 5h: {g_5h:.0f}%"
+                b_5h = render_mini_bar(g_5h, width=4)
+                return f"Gemini 5h: [{b_5h}] {g_5h:.0f}%"
             return f"{self.get_display_percentage(mode):.0f}%"
 
         elif mode == DisplayMode.CLAUDE_ALL:
             c_5h, c_wk = self.get_group_5h_and_weekly("claude")
             if c_5h is not None and c_wk is not None:
-                return f"C: 5h {c_5h:.0f}% | Tuần {c_wk:.0f}%"
+                b_5h = render_mini_bar(c_5h, width=4)
+                b_wk = render_mini_bar(c_wk, width=4)
+                return f"C: [{b_5h}] 5h {c_5h:.0f}% | [{b_wk}] Tuần {c_wk:.0f}%"
             elif c_5h is not None:
-                return f"Claude 5h: {c_5h:.0f}%"
+                b_5h = render_mini_bar(c_5h, width=4)
+                return f"Claude 5h: [{b_5h}] {c_5h:.0f}%"
             return f"{self.get_display_percentage(mode):.0f}%"
 
         elif mode == DisplayMode.GEMINI_5H:
             pct = self.get_display_percentage(mode)
-            return f"Gemini 5h: {pct:.0f}%"
+            b = render_mini_bar(pct, width=4)
+            return f"Gemini 5h: [{b}] {pct:.0f}%"
 
         elif mode == DisplayMode.CLAUDE_5H:
             pct = self.get_display_percentage(mode)
-            return f"Claude 5h: {pct:.0f}%"
+            b = render_mini_bar(pct, width=4)
+            return f"Claude 5h: [{b}] {pct:.0f}%"
 
         elif mode == DisplayMode.ACTIVE:
             act = self.active_model
-            return f"{act.percentage:.0f}%" if act else "100%"
+            if act:
+                b = render_mini_bar(act.percentage, width=4)
+                return f"[{b}] {act.percentage:.0f}%"
+            return "100%"
 
         # Default or LOWEST
         pct = self.get_display_percentage(mode)
-        return f"{pct:.0f}%"
+        b = render_mini_bar(pct, width=4)
+        return f"[{b}] {pct:.0f}%"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -316,7 +355,7 @@ class QuotaSnapshot:
 @dataclass
 class AppSettings:
     refresh_interval_sec: int = 60
-    display_mode: DisplayMode = DisplayMode.COMBINED_5H_WEEKLY
+    display_mode: DisplayMode = DisplayMode.MINI_BARS
     healthy_threshold: int = 70
     warning_threshold: int = 30
     critical_threshold: int = 10

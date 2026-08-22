@@ -30,7 +30,7 @@ class SettingsRepository:
                 try:
                     settings.display_mode = DisplayMode(rows["display_mode"])
                 except ValueError:
-                    settings.display_mode = DisplayMode.COMBINED_5H_WEEKLY
+                    settings.display_mode = DisplayMode.MINI_BARS
             if "healthy_threshold" in rows:
                 settings.healthy_threshold = int(rows["healthy_threshold"])
             if "warning_threshold" in rows:
