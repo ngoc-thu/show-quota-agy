@@ -56,10 +56,48 @@ class ConnectionState(str, Enum):
         return "⚠ Connection Error"
 
 
+def get_color_block_chars(percentage: float) -> tuple[str, str]:
+    if percentage >= 70.0:
+        return "🟩", "⬜"
+    elif percentage >= 30.0:
+        return "🟨", "⬜"
+    else:
+        return "🟥", "⬜"
+
+
+def get_color_dot_chars(percentage: float) -> tuple[str, str]:
+    if percentage >= 70.0:
+        return "🟢", "⚪"
+    elif percentage >= 30.0:
+        return "🟡", "⚪"
+    else:
+        return "🔴", "⚪"
+
+
+def get_status_badge(percentage: float) -> str:
+    if percentage >= 70.0:
+        return "🟢"
+    elif percentage >= 30.0:
+        return "🟡"
+    else:
+        return "🔴"
+
+
+def get_heart_icon(percentage: float) -> str:
+    if percentage >= 70.0:
+        return "💚"
+    elif percentage >= 30.0:
+        return "💛"
+    else:
+        return "❤️"
+
+
 def render_bar(percentage: float, width: int = 4, style: str = "rect") -> str:
     """Generates a compact mini progress bar with configurable style.
 
     Styles:
+    - 'color_blocks': 🟩/🟨/🟥 and ⬜
+    - 'color_dots': 🟢/🟡/🔴 and ⚪
     - 'rect': ▰ and ▱
     - 'block': █ and ░
     - 'dots': ● and ○
@@ -69,7 +107,13 @@ def render_bar(percentage: float, width: int = 4, style: str = "rect") -> str:
     filled = int(round((pct / 100.0) * width))
     empty = width - filled
 
-    if style == "block":
+    if style == "color_blocks":
+        f_char, e_char = get_color_block_chars(pct)
+        return f_char * filled + e_char * empty
+    elif style == "color_dots":
+        f_char, e_char = get_color_dot_chars(pct)
+        return f_char * filled + e_char * empty
+    elif style == "block":
         return "█" * filled + "░" * empty
     elif style == "dots":
         return "●" * filled + "○" * empty
@@ -84,6 +128,10 @@ def render_mini_bar(percentage: float, width: int = 4) -> str:
 
 
 class DisplayMode(str, Enum):
+    COLOR_BLOCKS = "color_blocks"              # 5h: [🟩🟩🟩🟩] 96% | 7d: [🟩🟩🟩⬜] 76% (Khối màu động)
+    COLOR_DOTS = "color_dots"                  # 5h: [🟢🟢🟢🟢] 96% | 7d: [🟢🟢🟢⚪] 76% (Chấm tròn màu)
+    STATUS_BADGE = "status_badge"              # 🟢 5h: [▰▰▰▰] 96% | 🟢 7d: [▰▰▰▱] 76% (Đèn trạng thái màu)
+    COLOR_HEARTS = "color_hearts"              # 5h: 💚 96% | 7d: 💚 76% (Trái tim màu)
     MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▱] 70% | 7d: [▰▰▰▱] 78% (Thanh ▰▱)
     SOLID_BLOCKS = "solid_blocks"              # 5h: [███░] 70% | 7d: [███░] 78% (Khối █░)
     CIRCLE_DOTS = "circle_dots"                # 5h: [●●●○] 70% | 7d: [●●●○] 78% (Chấm ●○)
@@ -252,6 +300,10 @@ class QuotaSnapshot:
             vals = [v for v in (p_5h, p_wk) if v is not None]
             return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
         elif mode in (
+            DisplayMode.COLOR_BLOCKS,
+            DisplayMode.COLOR_DOTS,
+            DisplayMode.STATUS_BADGE,
+            DisplayMode.COLOR_HEARTS,
             DisplayMode.MINI_BARS,
             DisplayMode.SOLID_BLOCKS,
             DisplayMode.CIRCLE_DOTS,
@@ -266,8 +318,10 @@ class QuotaSnapshot:
         low = self.lowest_model
         return low.percentage if low else 0.0
 
-    def get_display_label(self, mode: DisplayMode = DisplayMode.MINI_BARS) -> str:
+    def get_display_label(self, mode: DisplayMode = DisplayMode.COLOR_BLOCKS) -> str:
         if mode in (
+            DisplayMode.COLOR_BLOCKS,
+            DisplayMode.COLOR_DOTS,
             DisplayMode.MINI_BARS,
             DisplayMode.SOLID_BLOCKS,
             DisplayMode.CIRCLE_DOTS,
@@ -275,6 +329,8 @@ class QuotaSnapshot:
             DisplayMode.BARS_ONLY,
         ):
             style_map = {
+                DisplayMode.COLOR_BLOCKS: "color_blocks",
+                DisplayMode.COLOR_DOTS: "color_dots",
                 DisplayMode.MINI_BARS: "rect",
                 DisplayMode.SOLID_BLOCKS: "block",
                 DisplayMode.CIRCLE_DOTS: "dots",
@@ -303,6 +359,34 @@ class QuotaSnapshot:
                 b_low = render_bar(low.percentage, width=4, style=style)
                 return f"[{b_low}] {low.percentage:.0f}%" if show_pct else f"[{b_low}]"
             return "100%"
+
+        elif mode == DisplayMode.STATUS_BADGE:
+            l_5h, l_wk = self.get_5h_and_weekly()
+            if l_5h is not None and l_wk is not None:
+                b_5h = render_bar(l_5h, width=4, style="rect")
+                b_wk = render_bar(l_wk, width=4, style="rect")
+                s_5h = get_status_badge(l_5h)
+                s_wk = get_status_badge(l_wk)
+                return f"{s_5h} 5h: [{b_5h}] {l_5h:.0f}% | {s_wk} 7d: [{b_wk}] {l_wk:.0f}%"
+            elif l_5h is not None:
+                b_5h = render_bar(l_5h, width=4, style="rect")
+                return f"{get_status_badge(l_5h)} 5h: [{b_5h}] {l_5h:.0f}%"
+            elif l_wk is not None:
+                b_wk = render_bar(l_wk, width=4, style="rect")
+                return f"{get_status_badge(l_wk)} 7d: [{b_wk}] {l_wk:.0f}%"
+            low = self.lowest_model
+            return f"{get_status_badge(low.percentage if low else 100.0)} {low.percentage:.0f}%" if low else "🟢 100%"
+
+        elif mode == DisplayMode.COLOR_HEARTS:
+            l_5h, l_wk = self.get_5h_and_weekly()
+            if l_5h is not None and l_wk is not None:
+                return f"5h: {get_heart_icon(l_5h)} {l_5h:.0f}% | 7d: {get_heart_icon(l_wk)} {l_wk:.0f}%"
+            elif l_5h is not None:
+                return f"5h: {get_heart_icon(l_5h)} {l_5h:.0f}%"
+            elif l_wk is not None:
+                return f"7d: {get_heart_icon(l_wk)} {l_wk:.0f}%"
+            low = self.lowest_model
+            return f"{get_heart_icon(low.percentage if low else 100.0)} {low.percentage:.0f}%" if low else "💚 100%"
 
         elif mode == DisplayMode.MINIMAL_LOWEST:
             low = self.lowest_model

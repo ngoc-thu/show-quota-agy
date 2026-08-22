@@ -91,8 +91,18 @@ class TestModels(unittest.TestCase):
         # Vertical lines mode
         self.assertEqual(snapshot.get_display_label(DisplayMode.VERTICAL_LINES), "5h: [▮▮▮▯] 74% | 7d: [▮▮▮▯] 81%")
 
-        # Bars only mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.BARS_ONLY), "5h: [▰▰▰▱] | 7d: [▰▰▰▱]")
+        # Color blocks mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_BLOCKS), "5h: [🟩🟩🟩⬜] 74% | 7d: [🟩🟩🟩⬜] 81%")
+        self.assertEqual(snapshot.get_display_percentage(DisplayMode.COLOR_BLOCKS), 74.0)
+
+        # Color dots mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_DOTS), "5h: [🟢🟢🟢⚪] 74% | 7d: [🟢🟢🟢⚪] 81%")
+
+        # Status badge mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.STATUS_BADGE), "🟢 5h: [▰▰▰▱] 74% | 🟢 7d: [▰▰▰▱] 81%")
+
+        # Color hearts mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_HEARTS), "5h: 💚 74% | 7d: 💚 81%")
 
         # Minimal lowest
         self.assertEqual(snapshot.get_display_label(DisplayMode.MINIMAL_LOWEST), "[▰▰▱▱] 43%")

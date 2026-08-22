@@ -68,7 +68,11 @@ class SettingsView(Adw.PreferencesPage):
             subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
         )
         display_options = [
-            (DisplayMode.MINI_BARS.value, "Thanh Mini Bar [▰▰▰▱]: 5h & 7d (Khuyến nghị)"),
+            (DisplayMode.COLOR_BLOCKS.value, "Khối màu động [🟩🟩🟩🟩]: 5h & 7d (Đổi màu theo Quota)"),
+            (DisplayMode.COLOR_DOTS.value, "Chấm tròn màu [🟢🟢🟢🟢]: 5h & 7d (Đổi màu theo Quota)"),
+            (DisplayMode.STATUS_BADGE.value, "Đèn trạng thái 🟢 + Thanh Mini Bar [▰▰▰▱]"),
+            (DisplayMode.COLOR_HEARTS.value, "Trái tim năng lượng 💚: 5h & 7d"),
+            (DisplayMode.MINI_BARS.value, "Thanh Mini Bar [▰▰▰▱]: 5h & 7d (Trắng đen)"),
             (DisplayMode.SOLID_BLOCKS.value, "Khối vuông đặc [███░]: 5h & 7d"),
             (DisplayMode.CIRCLE_DOTS.value, "Chấm tròn [●●●○]: 5h & 7d"),
             (DisplayMode.VERTICAL_LINES.value, "Vạch đứng [▮▮▮▯]: 5h & 7d"),
@@ -167,6 +171,10 @@ class SettingsView(Adw.PreferencesPage):
 
     def _on_display_mode_changed(self, row, param):
         modes = [
+            DisplayMode.COLOR_BLOCKS,
+            DisplayMode.COLOR_DOTS,
+            DisplayMode.STATUS_BADGE,
+            DisplayMode.COLOR_HEARTS,
             DisplayMode.MINI_BARS,
             DisplayMode.SOLID_BLOCKS,
             DisplayMode.CIRCLE_DOTS,
