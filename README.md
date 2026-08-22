@@ -122,7 +122,7 @@ python3 -m unittest discover -s tests -v
 ## 📂 Project Architecture
 
 ```text
-show-quota-agy/
+antigravity-quota-monitor/
 ├── src/
 │   ├── core/
 │   │   ├── models.py          # Data models & percentage calculations
