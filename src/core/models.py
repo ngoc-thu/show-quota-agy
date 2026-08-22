@@ -92,37 +92,57 @@ def get_heart_icon(percentage: float) -> str:
         return "❤️"
 
 
-def render_bar(percentage: float, width: int = 4, style: str = "small_squares") -> str:
+def get_diamond_char(percentage: float) -> str:
+    if percentage >= 70.0:
+        return "🔹"
+    elif percentage >= 30.0:
+        return "🔸"
+    else:
+        return "🔺"
+
+
+def get_dot_char(percentage: float) -> str:
+    if percentage >= 70.0:
+        return "🟢"
+    elif percentage >= 30.0:
+        return "🟡"
+    else:
+        return "🔴"
+
+
+def render_bar(percentage: float, width: int = 4, style: str = "diamonds") -> str:
     """Generates a compact progress bar with configurable style.
 
     Styles:
-    - 'small_squares': ▪ and ▫ (Khối vuông nhỏ)
+    - 'diamonds': 🔹/🔸/🔺 and ▫ (Kim cương nhỏ có màu bên trong)
+    - 'color_dots': 🟢/🟡/🔴 and ⚪ (Chấm tròn màu bên trong)
+    - 'small_squares': ▪ and ▫ (Khối vuông nhỏ trắng đen)
     - 'medium_squares': ◾ and ◽ (Khối vuông vừa)
     - 'rect': ▰ and ▱ (Thanh chữ nhật)
     - 'dots': ● and ○ (Chấm tròn)
     - 'bullets': • and ◦ (Chấm nhỏ)
     - 'lines': ▮ and ▯ (Vạch đứng)
     - 'block': █ and ░ (Khối đặc)
-    - 'color_blocks': 🟩/🟨/🟥 and ⬜ (Khối màu emoji)
-    - 'color_dots': 🟢/🟡/🔴 and ⚪ (Chấm màu emoji)
+    - 'color_blocks': 🟩/🟨/🟥 and ⬜ (Khối màu emoji lớn)
     """
     pct = max(0.0, min(100.0, float(percentage)))
     filled = int(round((pct / 100.0) * width))
     empty = width - filled
 
-    if style == "small_squares":
+    if style == "diamonds":
+        f_char = get_diamond_char(pct)
+        return f_char * filled + "▫" * empty
+    elif style == "diamonds_orange":
+        return "🔸" * filled + "▫" * empty
+    elif style == "color_dots":
+        f_char = get_dot_char(pct)
+        return f_char * filled + "⚪" * empty
+    elif style == "small_squares":
         return "▪" * filled + "▫" * empty
     elif style == "medium_squares":
         return "◾" * filled + "◽" * empty
-    elif style == "diamonds":
-        return "🔹" * filled + "▫" * empty
-    elif style == "diamonds_orange":
-        return "🔸" * filled + "▫" * empty
     elif style == "color_blocks":
         f_char, e_char = get_color_block_chars(pct)
-        return f_char * filled + e_char * empty
-    elif style == "color_dots":
-        f_char, e_char = get_color_dot_chars(pct)
         return f_char * filled + e_char * empty
     elif style == "dots":
         return "●" * filled + "○" * empty
