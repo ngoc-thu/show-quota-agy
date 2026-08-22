@@ -108,10 +108,18 @@ class MainWindow(Adw.ApplicationWindow):
         self.nav_list.connect("row-selected", self._on_nav_selected)
         sidebar_box.append(self.nav_list)
 
-        sidebar_page = Adw.NavigationPage.new(sidebar_box, "Menu")
+        # 1. Sidebar ToolbarView with HeaderBar
+        sidebar_toolbar = Adw.ToolbarView()
+        sidebar_header = Adw.HeaderBar()
+        sidebar_header.set_show_end_title_buttons(False)
+        sidebar_header.set_show_start_title_buttons(True)
+        sidebar_toolbar.add_top_bar(sidebar_header)
+        sidebar_toolbar.set_content(sidebar_box)
+
+        sidebar_page = Adw.NavigationPage.new(sidebar_toolbar, "Menu")
         split_view.set_sidebar(sidebar_page)
 
-        # 2. Content ViewStack
+        # 2. Content ViewStack wrapped in ToolbarView with HeaderBar
         self.view_stack = Adw.ViewStack()
 
         # Overview View
@@ -133,7 +141,18 @@ class MainWindow(Adw.ApplicationWindow):
         self.about_view = AboutView()
         self.view_stack.add_named(self.about_view, "about")
 
-        content_page = Adw.NavigationPage.new(self.view_stack, "Content")
+        content_toolbar = Adw.ToolbarView()
+        self.content_header = Adw.HeaderBar()
+        self.content_header.set_show_end_title_buttons(True)
+        self.content_header.set_show_start_title_buttons(False)
+
+        self.window_title = Adw.WindowTitle(title=APP_NAME, subtitle="Tổng quan")
+        self.content_header.set_title_widget(self.window_title)
+
+        content_toolbar.add_top_bar(self.content_header)
+        content_toolbar.set_content(self.view_stack)
+
+        content_page = Adw.NavigationPage.new(content_toolbar, "Content")
         split_view.set_content(content_page)
 
         self.set_content(split_view)
@@ -142,6 +161,17 @@ class MainWindow(Adw.ApplicationWindow):
         target = initial_tab if initial_tab in self.row_map else "overview"
         self.nav_list.select_row(self.row_map[target])
         self.view_stack.set_visible_child_name(target)
+        self._update_title_for_tag(target)
+
+    def _update_title_for_tag(self, tag: str):
+        subtitles = {
+            "overview": "Tổng quan",
+            "history": "Lịch sử",
+            "settings": "Cài đặt",
+            "about": "Giới thiệu",
+        }
+        if tag in subtitles:
+            self.window_title.set_subtitle(subtitles[tag])
 
     def _on_nav_selected(self, listbox, row):
         if not row:
@@ -149,6 +179,7 @@ class MainWindow(Adw.ApplicationWindow):
         for tag, r in self.row_map.items():
             if r == row:
                 self.view_stack.set_visible_child_name(tag)
+                self._update_title_for_tag(tag)
                 if tag == "history":
                     self.history_view.load_data()
                 break
