@@ -65,12 +65,12 @@ def render_mini_bar(percentage: float, width: int = 4) -> str:
 
 
 class DisplayMode(str, Enum):
-    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▱] 74% | Tuần: [▰▰▰▰] 79% (Khuyến nghị)
-    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: 74% | Tuần: 79% (Dạng số)
+    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▱] 74% | 7d: [▰▰▰▰] 79% (Khuyến nghị)
+    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: 74% | 7d: 79% (Dạng số)
     LOWEST = "lowest"                          # Model thấp nhất
     ACTIVE = "active"                          # Model mặc định / đang active
-    GEMINI_ALL = "gemini_all"                  # Gemini: Cả 5h & Tuần
-    CLAUDE_ALL = "claude_all"                  # Claude/GPT: Cả 5h & Tuần
+    GEMINI_ALL = "gemini_all"                  # Gemini: Cả 5h & 7d
+    CLAUDE_ALL = "claude_all"                  # Claude/GPT: Cả 5h & 7d
     GEMINI_5H = "gemini_5h"                    # Hạn mức 5h của Gemini
     CLAUDE_5H = "claude_5h"                    # Hạn mức 5h của Claude/GPT
 
@@ -241,13 +241,13 @@ class QuotaSnapshot:
             if l_5h is not None and l_wk is not None:
                 b_5h = render_mini_bar(l_5h, width=4)
                 b_wk = render_mini_bar(l_wk, width=4)
-                return f"5h: [{b_5h}] {l_5h:.0f}% | Tuần: [{b_wk}] {l_wk:.0f}%"
+                return f"5h: [{b_5h}] {l_5h:.0f}% | 7d: [{b_wk}] {l_wk:.0f}%"
             elif l_5h is not None:
                 b_5h = render_mini_bar(l_5h, width=4)
                 return f"5h: [{b_5h}] {l_5h:.0f}%"
             elif l_wk is not None:
                 b_wk = render_mini_bar(l_wk, width=4)
-                return f"Tuần: [{b_wk}] {l_wk:.0f}%"
+                return f"7d: [{b_wk}] {l_wk:.0f}%"
             low = self.lowest_model
             if low:
                 b_low = render_mini_bar(low.percentage, width=4)
@@ -257,11 +257,11 @@ class QuotaSnapshot:
         elif mode == DisplayMode.COMBINED_5H_WEEKLY:
             l_5h, l_wk = self.get_5h_and_weekly()
             if l_5h is not None and l_wk is not None:
-                return f"5h: {l_5h:.0f}% | Tuần: {l_wk:.0f}%"
+                return f"5h: {l_5h:.0f}% | 7d: {l_wk:.0f}%"
             elif l_5h is not None:
                 return f"5h: {l_5h:.0f}%"
             elif l_wk is not None:
-                return f"Tuần: {l_wk:.0f}%"
+                return f"7d: {l_wk:.0f}%"
             low = self.lowest_model
             return f"{low.percentage:.0f}%" if low else "100%"
 
@@ -270,7 +270,7 @@ class QuotaSnapshot:
             if g_5h is not None and g_wk is not None:
                 b_5h = render_mini_bar(g_5h, width=4)
                 b_wk = render_mini_bar(g_wk, width=4)
-                return f"G: [{b_5h}] 5h {g_5h:.0f}% | [{b_wk}] Tuần {g_wk:.0f}%"
+                return f"G: [{b_5h}] 5h {g_5h:.0f}% | [{b_wk}] 7d {g_wk:.0f}%"
             elif g_5h is not None:
                 b_5h = render_mini_bar(g_5h, width=4)
                 return f"Gemini 5h: [{b_5h}] {g_5h:.0f}%"
@@ -281,7 +281,7 @@ class QuotaSnapshot:
             if c_5h is not None and c_wk is not None:
                 b_5h = render_mini_bar(c_5h, width=4)
                 b_wk = render_mini_bar(c_wk, width=4)
-                return f"C: [{b_5h}] 5h {c_5h:.0f}% | [{b_wk}] Tuần {c_wk:.0f}%"
+                return f"C: [{b_5h}] 5h {c_5h:.0f}% | [{b_wk}] 7d {c_wk:.0f}%"
             elif c_5h is not None:
                 b_5h = render_mini_bar(c_5h, width=4)
                 return f"Claude 5h: [{b_5h}] {c_5h:.0f}%"
