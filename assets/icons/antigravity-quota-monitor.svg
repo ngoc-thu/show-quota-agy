@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#4C1D95"/>
+    </linearGradient>
+    <linearGradient id="rocketBody" x1="60" y1="60" x2="196" y2="196" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="flameGradient" x1="0" y1="0" x2="0" y2="1" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="50%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Rounded Background -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bgGradient)"/>
+  <rect x="8" y="8" width="240" height="240" rx="56" stroke="rgba(255, 255, 255, 0.15)" stroke-width="2"/>
+
+  <!-- Speed Lines / Stars -->
+  <circle cx="56" cy="64" r="3" fill="#C4B5FD" opacity="0.8"/>
+  <circle cx="196" cy="48" r="2.5" fill="#C4B5FD" opacity="0.6"/>
+  <circle cx="210" cy="180" r="3" fill="#C4B5FD" opacity="0.7"/>
+  <circle cx="48" cy="170" r="2" fill="#C4B5FD" opacity="0.5"/>
+
+  <!-- Exhaust Flame -->
+  <path d="M102 166 L86 210 C86 210 110 200 120 184 Z" fill="url(#flameGradient)" opacity="0.9"/>
+  <path d="M112 156 L96 195 C96 195 116 186 124 172 Z" fill="#FDE047"/>
+
+  <!-- Left Fin -->
+  <path d="M100 128 L64 164 C62 166 64 172 68 172 L106 162 Z" fill="#9333EA"/>
+
+  <!-- Right Fin -->
+  <path d="M128 100 L164 64 C166 62 172 64 172 68 L162 106 Z" fill="#9333EA"/>
+
+  <!-- Rocket Body -->
+  <path d="M188 68 C144 56 100 88 88 128 C82 148 94 162 94 162 C94 162 108 174 128 168 C168 156 200 112 188 68 Z" fill="url(#rocketBody)"/>
+
+  <!-- Rocket Porthole Window -->
+  <circle cx="140" cy="116" r="18" fill="#7C3AED"/>
+  <circle cx="140" cy="116" r="13" fill="#06B6D4"/>
+  <circle cx="144" cy="112" r="4" fill="#FFFFFF" opacity="0.8"/>
+
+  <!-- Rocket Nose Tip Accent -->
+  <path d="M188 68 C176 64 164 66 156 70 C170 84 184 98 186 100 C190 92 192 80 188 68 Z" fill="#EF4444"/>
+</svg>

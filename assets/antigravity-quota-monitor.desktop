@@ -1,0 +1,26 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Antigravity Quota Monitor
+GenericName=Quota Monitor
+Comment=Monitor Google Antigravity quota in real-time on GNOME Top Bar and Dashboard
+Exec=antigravity-quota --gui
+Icon=antigravity-quota-monitor
+Terminal=false
+Categories=Utility;Development;System;
+Keywords=antigravity;quota;gemini;ai;monitor;tray;
+StartupNotify=true
+StartupWMClass=org.google.antigravity.QuotaMonitor
+Actions=Dashboard;Tray;Refresh;
+
+[Desktop Action Dashboard]
+Name=Open Dashboard
+Exec=antigravity-quota --gui
+
+[Desktop Action Tray]
+Name=Start Top Bar Indicator
+Exec=antigravity-quota --tray
+
+[Desktop Action Refresh]
+Name=Refresh Quota
+Exec=antigravity-quota --refresh

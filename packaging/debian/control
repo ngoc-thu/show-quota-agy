@@ -1,0 +1,11 @@
+Package: antigravity-quota-monitor
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Antigravity Tools <support@antigravity.google>
+Depends: python3 (>= 3.10), python3-gi, python3-dbus, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-appindicator3-0.1 | gir1.2-ayatanaappindicator3-0.1, python3-cairo
+Description: Real-time Antigravity Quota Monitor for Ubuntu GNOME Desktop
+ Native Ubuntu/GNOME desktop utility to monitor Google Antigravity
+ remaining quota in real-time on the GNOME Top Bar, providing
+ detailed breakdown cards, SQLite usage history, and CLI tooling.
