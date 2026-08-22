@@ -78,34 +78,41 @@ class TestModels(unittest.TestCase):
         self.assertEqual(snapshot.get_display_label(DisplayMode.COMBINED_5H_WEEKLY), "5h: 74% | 7d: 81%")
         self.assertEqual(snapshot.get_display_percentage(DisplayMode.COMBINED_5H_WEEKLY), 74.0)
 
-        # Mini Bars mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.MINI_BARS), "5h: [▰▰▰▱] 74% | 7d: [▰▰▰▱] 81%")
+        # Mini Bars mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.MINI_BARS), "5h: [▰▰▱] 74% | 7d: [▰▰▱] 81%")
         self.assertEqual(snapshot.get_display_percentage(DisplayMode.MINI_BARS), 74.0)
 
-        # Solid blocks mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.SOLID_BLOCKS), "5h: [███░] 74% | 7d: [███░] 81%")
+        # Solid blocks mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.SOLID_BLOCKS), "5h: [██░] 74% | 7d: [██░] 81%")
 
-        # Circle dots mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.CIRCLE_DOTS), "5h: [●●●○] 74% | 7d: [●●●○] 81%")
+        # Circle dots mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.CIRCLE_DOTS), "5h: [●●○] 74% | 7d: [●●○] 81%")
 
-        # Vertical lines mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.VERTICAL_LINES), "5h: [▮▮▮▯] 74% | 7d: [▮▮▮▯] 81%")
+        # Vertical lines mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.VERTICAL_LINES), "5h: [▮▮▯] 74% | 7d: [▮▮▯] 81%")
 
-        # Color blocks mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_BLOCKS), "5h: [🟩🟩🟩⬜] 74% | 7d: [🟩🟩🟩⬜] 81%")
+        # Color blocks mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_BLOCKS), "5h: [🟩🟩⬜] 74% | 7d: [🟩🟩⬜] 81%")
         self.assertEqual(snapshot.get_display_percentage(DisplayMode.COLOR_BLOCKS), 74.0)
 
-        # Color dots mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_DOTS), "5h: [🟢🟢🟢⚪] 74% | 7d: [🟢🟢🟢⚪] 81%")
+        # Color blocks mini mode (2 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_BLOCKS_MINI), "5h: [🟩⬜] 74% | 7d: [🟩🟩] 81%")
+        self.assertEqual(snapshot.get_display_percentage(DisplayMode.COLOR_BLOCKS_MINI), 74.0)
 
-        # Status badge mode
-        self.assertEqual(snapshot.get_display_label(DisplayMode.STATUS_BADGE), "🟢 5h: [▰▰▰▱] 74% | 🟢 7d: [▰▰▰▱] 81%")
+        # Small squares mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.SMALL_SQUARES), "5h: [▪️▪️▫️] 74% | 7d: [▪️▪️▫️] 81%")
+
+        # Color dots mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_DOTS), "5h: [🟢🟢⚪] 74% | 7d: [🟢🟢⚪] 81%")
+
+        # Status badge mode (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.STATUS_BADGE), "🟢 5h: [▰▰▱] 74% | 🟢 7d: [▰▰▱] 81%")
 
         # Color hearts mode
         self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_HEARTS), "5h: 💚 74% | 7d: 💚 81%")
 
-        # Minimal lowest
-        self.assertEqual(snapshot.get_display_label(DisplayMode.MINIMAL_LOWEST), "[▰▰▱▱] 43%")
+        # Minimal lowest (3 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.MINIMAL_LOWEST), "[▰▱▱] 43%")
 
 
 if __name__ == "__main__":

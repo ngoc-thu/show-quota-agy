@@ -68,17 +68,19 @@ class SettingsView(Adw.PreferencesPage):
             subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
         )
         display_options = [
-            (DisplayMode.COLOR_BLOCKS.value, "Khối màu động [🟩🟩🟩🟩]: 5h & 7d (Đổi màu theo Quota)"),
-            (DisplayMode.COLOR_DOTS.value, "Chấm tròn màu [🟢🟢🟢🟢]: 5h & 7d (Đổi màu theo Quota)"),
-            (DisplayMode.STATUS_BADGE.value, "Đèn trạng thái 🟢 + Thanh Mini Bar [▰▰▰▱]"),
+            (DisplayMode.COLOR_BLOCKS_MINI.value, "Khối màu mini [🟩🟩]: 5h & 7d (Siêu nhỏ gọn — Khuyến nghị)"),
+            (DisplayMode.COLOR_BLOCKS.value, "Khối màu vừa [🟩🟩🟩]: 5h & 7d (Đổi màu theo Quota)"),
+            (DisplayMode.SMALL_SQUARES.value, "Khối vuông nhỏ tinh gọn [▪️▪️▪️]: 5h & 7d"),
+            (DisplayMode.COLOR_DOTS.value, "Chấm tròn màu [🟢🟢🟢]: 5h & 7d (Đổi màu theo Quota)"),
+            (DisplayMode.STATUS_BADGE.value, "Đèn trạng thái 🟢 + Thanh Mini Bar [▰▰▰]"),
             (DisplayMode.COLOR_HEARTS.value, "Trái tim năng lượng 💚: 5h & 7d"),
-            (DisplayMode.MINI_BARS.value, "Thanh Mini Bar [▰▰▰▱]: 5h & 7d (Trắng đen)"),
-            (DisplayMode.SOLID_BLOCKS.value, "Khối vuông đặc [███░]: 5h & 7d"),
-            (DisplayMode.CIRCLE_DOTS.value, "Chấm tròn [●●●○]: 5h & 7d"),
-            (DisplayMode.VERTICAL_LINES.value, "Vạch đứng [▮▮▮▯]: 5h & 7d"),
-            (DisplayMode.BARS_ONLY.value, "Chỉ thanh Mini Bar (Ẩn %): 5h [▰▰▰▱] | 7d [▰▰▰▱]"),
+            (DisplayMode.MINI_BARS.value, "Thanh Mini Bar [▰▰▰]: 5h & 7d (Trắng đen)"),
+            (DisplayMode.SOLID_BLOCKS.value, "Khối vuông đặc [███]: 5h & 7d"),
+            (DisplayMode.CIRCLE_DOTS.value, "Chấm tròn [●●●]: 5h & 7d"),
+            (DisplayMode.VERTICAL_LINES.value, "Vạch đứng [▮▮▮]: 5h & 7d"),
+            (DisplayMode.BARS_ONLY.value, "Chỉ thanh Mini Bar (Ẩn %): 5h [▰▰▰] | 7d [▰▰▰]"),
             (DisplayMode.COMBINED_5H_WEEKLY.value, "Dạng số rút gọn: 5h 70% | 7d 78%"),
-            (DisplayMode.MINIMAL_LOWEST.value, "Tối giản: [▰▰▰▱] 70%"),
+            (DisplayMode.MINIMAL_LOWEST.value, "Tối giản: [▰▰▱] 70%"),
             (DisplayMode.LOWEST.value, "Chỉ số % thấp nhất: 70%"),
             (DisplayMode.ACTIVE.value, "Model đang chọn / mặc định"),
             (DisplayMode.GEMINI_ALL.value, "Gemini: Cả 5h & 7d"),
@@ -171,7 +173,9 @@ class SettingsView(Adw.PreferencesPage):
 
     def _on_display_mode_changed(self, row, param):
         modes = [
+            DisplayMode.COLOR_BLOCKS_MINI,
             DisplayMode.COLOR_BLOCKS,
+            DisplayMode.SMALL_SQUARES,
             DisplayMode.COLOR_DOTS,
             DisplayMode.STATUS_BADGE,
             DisplayMode.COLOR_HEARTS,
