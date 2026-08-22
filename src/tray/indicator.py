@@ -100,11 +100,13 @@ class TopBarIndicator:
 
     def _handle_open_dashboard(self):
         logger.info("Opening dashboard GUI...")
-        subprocess.Popen([sys.executable, "-m", "src.cli.main", "--gui"])
+        launcher = str(Path(__file__).resolve().parent.parent.parent / "antigravity-quota")
+        subprocess.Popen([launcher, "--gui"])
 
     def _handle_open_settings(self):
         logger.info("Opening settings GUI...")
-        subprocess.Popen([sys.executable, "-m", "src.cli.main", "--gui", "--tab=settings"])
+        launcher = str(Path(__file__).resolve().parent.parent.parent / "antigravity-quota")
+        subprocess.Popen([launcher, "--gui", "--tab=settings"])
 
     def _handle_quit(self):
         logger.info("Quitting Top Bar indicator...")

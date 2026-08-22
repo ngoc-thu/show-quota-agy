@@ -1,6 +1,6 @@
 """Manages user-level XDG autostart .desktop configuration."""
 
-import os
+import shutil
 from pathlib import Path
 from ..core.config import AUTOSTART_DIR, AUTOSTART_FILE, APP_NAME
 from ..core.logger import logger
@@ -9,7 +9,7 @@ DESKTOP_ENTRY_TEMPLATE = """[Desktop Entry]
 Type=Application
 Name={app_name}
 Comment=Monitor Google Antigravity quota from GNOME Top Bar
-Exec=antigravity-quota --tray
+Exec={exec_cmd}
 Icon=antigravity-quota-monitor
 Terminal=false
 Categories=Utility;Development;
@@ -30,7 +30,11 @@ class AutostartManager:
         try:
             if enable:
                 AUTOSTART_DIR.mkdir(parents=True, exist_ok=True)
-                content = DESKTOP_ENTRY_TEMPLATE.format(app_name=APP_NAME)
+                exec_bin = shutil.which("antigravity-quota") or str(Path.home() / ".local" / "bin" / "antigravity-quota")
+                content = DESKTOP_ENTRY_TEMPLATE.format(
+                    app_name=APP_NAME,
+                    exec_cmd=f"{exec_bin} --tray",
+                )
                 AUTOSTART_FILE.write_text(content, encoding="utf-8")
                 logger.info("Enabled autostart at %s", AUTOSTART_FILE)
             else:
