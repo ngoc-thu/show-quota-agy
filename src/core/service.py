@@ -65,6 +65,12 @@ class QuotaService:
     def refresh(self, force: bool = False) -> QuotaSnapshot:
         """Fetches live quota from Antigravity API and updates local state & history."""
         with self._lock:
+            # Sync settings from SQLite DB
+            try:
+                self.settings = self.settings_repo.load_settings()
+            except Exception as e:
+                logger.debug("Failed to reload settings in refresh: %s", e)
+
             detection = AntigravityDetector.detect()
             logger.debug("Antigravity process detection: %s", detection.details)
 

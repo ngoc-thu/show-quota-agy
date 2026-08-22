@@ -76,3 +76,11 @@ class SettingsRepository:
                 items,
             )
             conn.commit()
+
+        try:
+            from pathlib import Path
+            trigger_file = Path.home() / ".cache" / "antigravity-quota" / "settings.changed"
+            trigger_file.parent.mkdir(parents=True, exist_ok=True)
+            trigger_file.touch()
+        except Exception as e:
+            logger.debug("Failed to touch settings.changed trigger: %s", e)

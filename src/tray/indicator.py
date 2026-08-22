@@ -32,9 +32,10 @@ class TopBarIndicator:
             gi.require_version("AyatanaAppIndicator3", "0.1")
             from gi.repository import AyatanaAppIndicator3 as AppIndicator3
 
-        from gi.repository import Gtk, GLib
+        from gi.repository import Gtk, GLib, Gio
         self.Gtk = Gtk
         self.GLib = GLib
+        self.Gio = Gio
 
         # Create Indicator
         icon_theme_path = str(Path(__file__).resolve().parent.parent.parent / "assets" / "icons")
@@ -50,6 +51,9 @@ class TopBarIndicator:
         # Subscribe to service snapshot updates
         self.service.add_listener(self._on_snapshot_updated)
 
+        # Real-time settings file watcher
+        self._setup_settings_watcher()
+
         # Build initial menu
         self._update_ui(self.service.current_snapshot)
 
@@ -58,6 +62,37 @@ class TopBarIndicator:
 
         logger.info("GNOME Top Bar Indicator started.")
         Gtk.main()
+
+    def _setup_settings_watcher(self):
+        """Monitors settings.changed trigger file to reload settings in real-time."""
+        try:
+            cache_dir = Path.home() / ".cache" / "antigravity-quota"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            self.trigger_file = cache_dir / "settings.changed"
+            if not self.trigger_file.exists():
+                self.trigger_file.touch()
+
+            gfile = self.Gio.File.new_for_path(str(self.trigger_file))
+            self.file_monitor = gfile.monitor_file(self.Gio.FileMonitorFlags.NONE, None)
+            self.file_monitor.connect("changed", self._on_settings_file_changed)
+            logger.info("Real-time settings watcher initialized.")
+        except Exception as e:
+            logger.warn("Could not setup settings file watcher: %s", e)
+
+    def _on_settings_file_changed(self, monitor, file, other_file, event_type):
+        """Dispatches settings reload to GTK main loop."""
+        if self.GLib:
+            self.GLib.idle_add(self._reload_settings_and_update_ui)
+
+    def _reload_settings_and_update_ui(self):
+        """Reloads settings from SQLite and updates indicator immediately."""
+        try:
+            new_settings = self.service.settings_repo.load_settings()
+            self.service.settings = new_settings
+            logger.info("Tray live-reloaded settings: display_mode=%s", new_settings.display_mode)
+            self._update_ui(self.service.current_snapshot)
+        except Exception as e:
+            logger.error("Failed to live-reload settings in Tray: %s", e)
 
     def _on_snapshot_updated(self, snapshot: QuotaSnapshot):
         """Thread-safe dispatch to GTK main loop."""
