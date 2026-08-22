@@ -56,10 +56,15 @@ class TestModels(unittest.TestCase):
         self.assertEqual(q.formatted_countdown(now=now), "Ready to reset")
 
     def test_snapshot_display_percentage(self):
+        from src.core.models import QuotaGroup, QuotaBucket
         m1 = QuotaInfo(model_id="gemini-pro", model_name="Gemini Pro", remaining_fraction=0.88, percentage=88.0)
         m2 = QuotaInfo(model_id="claude", model_name="Claude", remaining_fraction=0.43, percentage=43.0)
+        b_5h = QuotaBucket(bucket_id="5h", display_name="5h", window="5h", remaining_fraction=0.74, percentage=74.0)
+        b_wk = QuotaBucket(bucket_id="wk", display_name="Weekly", window="weekly", remaining_fraction=0.81, percentage=81.0)
+        g1 = QuotaGroup(group_id="gemini-models", display_name="Gemini Models", description="", buckets=[b_5h, b_wk])
         snapshot = QuotaSnapshot(
             models={"gemini-pro": m1, "claude": m2},
+            groups=[g1],
             default_model_id="gemini-pro",
         )
 
@@ -68,6 +73,10 @@ class TestModels(unittest.TestCase):
 
         # Active mode
         self.assertEqual(snapshot.get_display_percentage(DisplayMode.ACTIVE), 88.0)
+
+        # Combined 5h & weekly
+        self.assertEqual(snapshot.get_display_label(DisplayMode.COMBINED_5H_WEEKLY), "5h: 74% | Tuần: 81%")
+        self.assertEqual(snapshot.get_display_percentage(DisplayMode.COMBINED_5H_WEEKLY), 74.0)
 
 
 if __name__ == "__main__":

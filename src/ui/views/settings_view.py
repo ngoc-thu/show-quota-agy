@@ -65,13 +65,16 @@ class SettingsView(Adw.PreferencesPage):
         # Display Mode Row
         self.display_row = Adw.ComboRow(
             title="Hiển thị trên Top Bar",
-            subtitle="Giá trị hiển thị trên thanh tác vụ",
+            subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
         )
         display_options = [
-            ("lowest", "Model có quota thấp nhất (Khuyến nghị)"),
-            ("active", "Model mặc định / đang active"),
-            ("gemini_5h", "Hạn mức 5h của Gemini"),
-            ("claude_5h", "Hạn mức 5h của Claude/GPT"),
+            (DisplayMode.COMBINED_5H_WEEKLY.value, "Hạn mức 5h & Tuần (5h: XX% | Tuần: YY%) — Khuyến nghị"),
+            (DisplayMode.LOWEST.value, "Chỉ hiển thị % thấp nhất (XX%)"),
+            (DisplayMode.ACTIVE.value, "Model đang chọn / mặc định"),
+            (DisplayMode.GEMINI_ALL.value, "Gemini: Cả 5h & Tuần"),
+            (DisplayMode.CLAUDE_ALL.value, "Claude/GPT: Cả 5h & Tuần"),
+            (DisplayMode.GEMINI_5H.value, "Chỉ hạn mức 5h của Gemini"),
+            (DisplayMode.CLAUDE_5H.value, "Chỉ hạn mức 5h của Claude/GPT"),
         ]
         display_model = Gtk.StringList.new([opt[1] for opt in display_options])
         self.display_row.set_model(display_model)
@@ -157,7 +160,15 @@ class SettingsView(Adw.PreferencesPage):
             self._save()
 
     def _on_display_mode_changed(self, row, param):
-        modes = [DisplayMode.LOWEST, DisplayMode.ACTIVE, DisplayMode.GEMINI_5H, DisplayMode.CLAUDE_5H]
+        modes = [
+            DisplayMode.COMBINED_5H_WEEKLY,
+            DisplayMode.LOWEST,
+            DisplayMode.ACTIVE,
+            DisplayMode.GEMINI_ALL,
+            DisplayMode.CLAUDE_ALL,
+            DisplayMode.GEMINI_5H,
+            DisplayMode.CLAUDE_5H,
+        ]
         idx = row.get_selected()
         if 0 <= idx < len(modes):
             self.settings.display_mode = modes[idx]

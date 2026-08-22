@@ -57,10 +57,13 @@ class ConnectionState(str, Enum):
 
 
 class DisplayMode(str, Enum):
-    LOWEST = "lowest"       # Lowest available quota across active models
-    ACTIVE = "active"       # Default agent model quota
-    GEMINI_5H = "gemini_5h" # Gemini 5-hour limit
-    CLAUDE_5H = "claude_5h" # Claude/GPT 5-hour limit
+    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: XX% | Tuần: YY% (Khuyến nghị)
+    LOWEST = "lowest"                          # Model thấp nhất
+    ACTIVE = "active"                          # Model mặc định / đang active
+    GEMINI_ALL = "gemini_all"                  # Gemini: Cả 5h & Tuần
+    CLAUDE_ALL = "claude_all"                  # Claude/GPT: Cả 5h & Tuần
+    GEMINI_5H = "gemini_5h"                    # Hạn mức 5h của Gemini
+    CLAUDE_5H = "claude_5h"                    # Hạn mức 5h của Claude/GPT
 
 
 @dataclass
@@ -171,27 +174,101 @@ class QuotaSnapshot:
             return next(iter(self.models.values()))
         return None
 
-    def get_display_percentage(self, mode: DisplayMode = DisplayMode.LOWEST) -> float:
+    def get_5h_and_weekly(self) -> tuple[Optional[float], Optional[float]]:
+        """Returns (lowest_5h_pct, lowest_weekly_pct) across all groups."""
+        p_5h = []
+        p_weekly = []
+        for g in self.groups:
+            for b in g.buckets:
+                if b.window == "5h":
+                    p_5h.append(b.percentage)
+                elif b.window == "weekly":
+                    p_weekly.append(b.percentage)
+        lowest_5h = min(p_5h) if p_5h else None
+        lowest_weekly = min(p_weekly) if p_weekly else None
+        return lowest_5h, lowest_weekly
+
+    def get_group_5h_and_weekly(self, group_keyword: str) -> tuple[Optional[float], Optional[float]]:
+        p_5h = None
+        p_weekly = None
+        for g in self.groups:
+            if group_keyword.lower() in g.group_id.lower() or group_keyword.lower() in g.display_name.lower():
+                for b in g.buckets:
+                    if b.window == "5h":
+                        p_5h = b.percentage
+                    elif b.window == "weekly":
+                        p_weekly = b.percentage
+        return p_5h, p_weekly
+
+    def get_display_percentage(self, mode: DisplayMode = DisplayMode.COMBINED_5H_WEEKLY) -> float:
         if mode == DisplayMode.ACTIVE:
             act = self.active_model
             return act.percentage if act else 0.0
         elif mode == DisplayMode.GEMINI_5H:
-            for g in self.groups:
-                if "gemini" in g.group_id.lower() or "gemini" in g.display_name.lower():
-                    for b in g.buckets:
-                        if b.window == "5h":
-                            return b.percentage
-                    return g.lowest_percentage
+            p_5h, _ = self.get_group_5h_and_weekly("gemini")
+            return p_5h if p_5h is not None else (self.lowest_model.percentage if self.lowest_model else 0.0)
         elif mode == DisplayMode.CLAUDE_5H:
-            for g in self.groups:
-                if "claude" in g.group_id.lower() or "claude" in g.display_name.lower() or "3p" in g.group_id.lower():
-                    for b in g.buckets:
-                        if b.window == "5h":
-                            return b.percentage
-                    return g.lowest_percentage
+            p_5h, _ = self.get_group_5h_and_weekly("claude")
+            return p_5h if p_5h is not None else (self.lowest_model.percentage if self.lowest_model else 0.0)
+        elif mode == DisplayMode.GEMINI_ALL:
+            p_5h, p_wk = self.get_group_5h_and_weekly("gemini")
+            vals = [v for v in (p_5h, p_wk) if v is not None]
+            return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
+        elif mode == DisplayMode.CLAUDE_ALL:
+            p_5h, p_wk = self.get_group_5h_and_weekly("claude")
+            vals = [v for v in (p_5h, p_wk) if v is not None]
+            return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
+        elif mode == DisplayMode.COMBINED_5H_WEEKLY:
+            p_5h, p_wk = self.get_5h_and_weekly()
+            vals = [v for v in (p_5h, p_wk) if v is not None]
+            return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
         # Default LOWEST
         low = self.lowest_model
         return low.percentage if low else 0.0
+
+    def get_display_label(self, mode: DisplayMode = DisplayMode.COMBINED_5H_WEEKLY) -> str:
+        if mode == DisplayMode.COMBINED_5H_WEEKLY:
+            l_5h, l_wk = self.get_5h_and_weekly()
+            if l_5h is not None and l_wk is not None:
+                return f"5h: {l_5h:.0f}% | Tuần: {l_wk:.0f}%"
+            elif l_5h is not None:
+                return f"5h: {l_5h:.0f}%"
+            elif l_wk is not None:
+                return f"Tuần: {l_wk:.0f}%"
+            low = self.lowest_model
+            return f"{low.percentage:.0f}%" if low else "100%"
+
+        elif mode == DisplayMode.GEMINI_ALL:
+            g_5h, g_wk = self.get_group_5h_and_weekly("gemini")
+            if g_5h is not None and g_wk is not None:
+                return f"G: 5h {g_5h:.0f}% | Tuần {g_wk:.0f}%"
+            elif g_5h is not None:
+                return f"Gemini 5h: {g_5h:.0f}%"
+            return f"{self.get_display_percentage(mode):.0f}%"
+
+        elif mode == DisplayMode.CLAUDE_ALL:
+            c_5h, c_wk = self.get_group_5h_and_weekly("claude")
+            if c_5h is not None and c_wk is not None:
+                return f"C: 5h {c_5h:.0f}% | Tuần {c_wk:.0f}%"
+            elif c_5h is not None:
+                return f"Claude 5h: {c_5h:.0f}%"
+            return f"{self.get_display_percentage(mode):.0f}%"
+
+        elif mode == DisplayMode.GEMINI_5H:
+            pct = self.get_display_percentage(mode)
+            return f"Gemini 5h: {pct:.0f}%"
+
+        elif mode == DisplayMode.CLAUDE_5H:
+            pct = self.get_display_percentage(mode)
+            return f"Claude 5h: {pct:.0f}%"
+
+        elif mode == DisplayMode.ACTIVE:
+            act = self.active_model
+            return f"{act.percentage:.0f}%" if act else "100%"
+
+        # Default or LOWEST
+        pct = self.get_display_percentage(mode)
+        return f"{pct:.0f}%"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -239,7 +316,7 @@ class QuotaSnapshot:
 @dataclass
 class AppSettings:
     refresh_interval_sec: int = 60
-    display_mode: DisplayMode = DisplayMode.LOWEST
+    display_mode: DisplayMode = DisplayMode.COMBINED_5H_WEEKLY
     healthy_threshold: int = 70
     warning_threshold: int = 30
     critical_threshold: int = 10

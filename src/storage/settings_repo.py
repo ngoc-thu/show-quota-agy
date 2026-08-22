@@ -27,7 +27,10 @@ class SettingsRepository:
             if "refresh_interval_sec" in rows:
                 settings.refresh_interval_sec = int(rows["refresh_interval_sec"])
             if "display_mode" in rows:
-                settings.display_mode = DisplayMode(rows["display_mode"])
+                try:
+                    settings.display_mode = DisplayMode(rows["display_mode"])
+                except ValueError:
+                    settings.display_mode = DisplayMode.COMBINED_5H_WEEKLY
             if "healthy_threshold" in rows:
                 settings.healthy_threshold = int(rows["healthy_threshold"])
             if "warning_threshold" in rows:
