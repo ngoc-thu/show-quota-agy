@@ -92,58 +92,65 @@ def get_heart_icon(percentage: float) -> str:
         return "❤️"
 
 
-def render_bar(percentage: float, width: int = 3, style: str = "rect") -> str:
-    """Generates a compact mini progress bar with configurable style.
+def render_bar(percentage: float, width: int = 4, style: str = "small_squares") -> str:
+    """Generates a compact progress bar with configurable style.
 
     Styles:
-    - 'color_blocks': 🟩/🟨/🟥 and ⬜
-    - 'color_dots': 🟢/🟡/🔴 and ⚪
-    - 'small_squares': ▪️ and ▫️
-    - 'rect': ▰ and ▱
-    - 'block': █ and ░
-    - 'dots': ● and ○
-    - 'lines': ▮ and ▯
+    - 'small_squares': ▪ and ▫ (Khối vuông nhỏ)
+    - 'medium_squares': ◾ and ◽ (Khối vuông vừa)
+    - 'rect': ▰ and ▱ (Thanh chữ nhật)
+    - 'dots': ● and ○ (Chấm tròn)
+    - 'bullets': • and ◦ (Chấm nhỏ)
+    - 'lines': ▮ and ▯ (Vạch đứng)
+    - 'block': █ and ░ (Khối đặc)
+    - 'color_blocks': 🟩/🟨/🟥 and ⬜ (Khối màu emoji)
+    - 'color_dots': 🟢/🟡/🔴 and ⚪ (Chấm màu emoji)
     """
     pct = max(0.0, min(100.0, float(percentage)))
     filled = int(round((pct / 100.0) * width))
     empty = width - filled
 
-    if style == "color_blocks":
+    if style == "small_squares":
+        return "▪" * filled + "▫" * empty
+    elif style == "medium_squares":
+        return "◾" * filled + "◽" * empty
+    elif style == "color_blocks":
         f_char, e_char = get_color_block_chars(pct)
         return f_char * filled + e_char * empty
     elif style == "color_dots":
         f_char, e_char = get_color_dot_chars(pct)
         return f_char * filled + e_char * empty
-    elif style == "small_squares":
-        return "▪️" * filled + "▫️" * empty
-    elif style == "block":
-        return "█" * filled + "░" * empty
     elif style == "dots":
         return "●" * filled + "○" * empty
+    elif style == "bullets":
+        return "•" * filled + "◦" * empty
     elif style == "lines":
         return "▮" * filled + "▯" * empty
+    elif style == "block":
+        return "█" * filled + "░" * empty
     return "▰" * filled + "▱" * empty
 
 
-def render_mini_bar(percentage: float, width: int = 3) -> str:
-    """Generates a compact mini progress bar e.g. ▰▰▱."""
+def render_mini_bar(percentage: float, width: int = 4) -> str:
+    """Generates a compact mini progress bar e.g. ▰▰▰▱."""
     return render_bar(percentage, width=width, style="rect")
 
 
 class DisplayMode(str, Enum):
-    COLOR_BLOCKS = "color_blocks"              # 5h: [🟩🟩🟩] 92% | 7d: [🟩🟩⬜] 75% (Khối màu vừa - 3 ô)
-    COLOR_BLOCKS_MINI = "color_blocks_mini"    # 5h: [🟩🟩] 92% | 7d: [🟩🟩] 75% (Khối màu siêu nhỏ - 2 ô)
-    COLOR_DOTS = "color_dots"                  # 5h: [🟢🟢🟢] 92% | 7d: [🟢🟢⚪] 75% (Chấm tròn màu)
-    SMALL_SQUARES = "small_squares"            # 5h: [▪️▪️▪️] 92% | 7d: [▪️▪️▫️] 75% (Khối vuông nhỏ)
-    STATUS_BADGE = "status_badge"              # 🟢 5h: [▰▰▰] 92% | 🟢 7d: [▰▰▱] 75% (Đèn trạng thái màu)
+    SMALL_SQUARES = "small_squares"            # 5h: [▪▪▪▪] 92% | 7d: [▪▪▪▫] 75% (Khối vuông nhỏ - Khuyến nghị)
+    MEDIUM_SQUARES = "medium_squares"          # 5h: [◾◾◾◾] 92% | 7d: [◾◾◾◽] 75% (Khối vuông vừa)
+    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▰] 92% | 7d: [▰▰▰▱] 75% (Thanh chữ nhật ▰▱)
+    CIRCLE_DOTS = "circle_dots"                # 5h: [●●●●] 92% | 7d: [●●●○] 75% (Chấm tròn ●○)
+    BULLETS = "bullets"                        # 5h: [••••] 92% | 7d: [•••◦] 75% (Chấm nhỏ •◦)
+    VERTICAL_LINES = "vertical_lines"          # 5h: [▮▮▮▮] 92% | 7d: [▮▮▮▯] 75% (Vạch đứng ▮▯)
+    SOLID_BLOCKS = "solid_blocks"              # 5h: [████] 92% | 7d: [███░] 75% (Khối đặc █░)
+    STATUS_BADGE = "status_badge"              # 🟢 5h: [▪▪▪▪] 92% | 🟢 7d: [▪▪▪▫] 75% (Đèn trạng thái màu + Khối nhỏ)
+    COLOR_BLOCKS = "color_blocks"              # 5h: [🟩🟩🟩🟩] 92% | 7d: [🟩🟩🟩⬜] 75% (Khối màu Emoji)
+    COLOR_DOTS = "color_dots"                  # 5h: [🟢🟢🟢🟢] 92% | 7d: [🟢🟢🟢⚪] 75% (Chấm màu Emoji)
     COLOR_HEARTS = "color_hearts"              # 5h: 💚 92% | 7d: 💚 75% (Trái tim màu)
-    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰] 70% | 7d: [▰▰▱] 78% (Thanh ▰▱)
-    SOLID_BLOCKS = "solid_blocks"              # 5h: [███] 70% | 7d: [██░] 78% (Khối █░)
-    CIRCLE_DOTS = "circle_dots"                # 5h: [●●●] 70% | 7d: [●●○] 78% (Chấm ●○)
-    VERTICAL_LINES = "vertical_lines"          # 5h: [▮▮▮] 70% | 7d: [▮▮▯] 78% (Vạch ▮▯)
-    BARS_ONLY = "bars_only"                    # 5h: [▰▰▰] | 7d: [▰▰▰] (Chỉ thanh, ẩn %)
+    BARS_ONLY = "bars_only"                    # 5h: [▪▪▪▪] | 7d: [▪▪▪▫] (Chỉ khối, ẩn %)
     COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: 70% | 7d: 78% (Dạng số rút gọn)
-    MINIMAL_LOWEST = "minimal_lowest"          # [▰▰▱] 70% (Tối giản)
+    MINIMAL_LOWEST = "minimal_lowest"          # [▪▪▪▫] 70% (Tối giản)
     LOWEST = "lowest"                          # 70% (Chỉ số % thấp nhất)
     ACTIVE = "active"                          # Model mặc định / đang active
     GEMINI_ALL = "gemini_all"                  # Gemini: Cả 5h & 7d
@@ -305,16 +312,17 @@ class QuotaSnapshot:
             vals = [v for v in (p_5h, p_wk) if v is not None]
             return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
         elif mode in (
-            DisplayMode.COLOR_BLOCKS,
-            DisplayMode.COLOR_BLOCKS_MINI,
-            DisplayMode.COLOR_DOTS,
             DisplayMode.SMALL_SQUARES,
-            DisplayMode.STATUS_BADGE,
-            DisplayMode.COLOR_HEARTS,
+            DisplayMode.MEDIUM_SQUARES,
             DisplayMode.MINI_BARS,
-            DisplayMode.SOLID_BLOCKS,
             DisplayMode.CIRCLE_DOTS,
+            DisplayMode.BULLETS,
             DisplayMode.VERTICAL_LINES,
+            DisplayMode.SOLID_BLOCKS,
+            DisplayMode.STATUS_BADGE,
+            DisplayMode.COLOR_BLOCKS,
+            DisplayMode.COLOR_DOTS,
+            DisplayMode.COLOR_HEARTS,
             DisplayMode.BARS_ONLY,
             DisplayMode.COMBINED_5H_WEEKLY,
         ):
@@ -325,66 +333,67 @@ class QuotaSnapshot:
         low = self.lowest_model
         return low.percentage if low else 0.0
 
-    def get_display_label(self, mode: DisplayMode = DisplayMode.COLOR_BLOCKS) -> str:
+    def get_display_label(self, mode: DisplayMode = DisplayMode.SMALL_SQUARES) -> str:
         if mode in (
-            DisplayMode.COLOR_BLOCKS,
-            DisplayMode.COLOR_BLOCKS_MINI,
-            DisplayMode.COLOR_DOTS,
             DisplayMode.SMALL_SQUARES,
+            DisplayMode.MEDIUM_SQUARES,
             DisplayMode.MINI_BARS,
-            DisplayMode.SOLID_BLOCKS,
             DisplayMode.CIRCLE_DOTS,
+            DisplayMode.BULLETS,
             DisplayMode.VERTICAL_LINES,
+            DisplayMode.SOLID_BLOCKS,
+            DisplayMode.COLOR_BLOCKS,
+            DisplayMode.COLOR_DOTS,
             DisplayMode.BARS_ONLY,
         ):
             style_map = {
-                DisplayMode.COLOR_BLOCKS: "color_blocks",
-                DisplayMode.COLOR_BLOCKS_MINI: "color_blocks",
-                DisplayMode.COLOR_DOTS: "color_dots",
                 DisplayMode.SMALL_SQUARES: "small_squares",
+                DisplayMode.MEDIUM_SQUARES: "medium_squares",
                 DisplayMode.MINI_BARS: "rect",
-                DisplayMode.SOLID_BLOCKS: "block",
                 DisplayMode.CIRCLE_DOTS: "dots",
+                DisplayMode.BULLETS: "bullets",
                 DisplayMode.VERTICAL_LINES: "lines",
-                DisplayMode.BARS_ONLY: "rect",
+                DisplayMode.SOLID_BLOCKS: "block",
+                DisplayMode.COLOR_BLOCKS: "color_blocks",
+                DisplayMode.COLOR_DOTS: "color_dots",
+                DisplayMode.BARS_ONLY: "small_squares",
             }
-            bar_width = 2 if mode == DisplayMode.COLOR_BLOCKS_MINI else 3
-            style = style_map.get(mode, "rect")
+            style = style_map.get(mode, "small_squares")
             show_pct = (mode != DisplayMode.BARS_ONLY)
 
             l_5h, l_wk = self.get_5h_and_weekly()
             if l_5h is not None and l_wk is not None:
-                b_5h = render_bar(l_5h, width=bar_width, style=style)
-                b_wk = render_bar(l_wk, width=bar_width, style=style)
+                b_5h = render_bar(l_5h, width=4, style=style)
+                b_wk = render_bar(l_wk, width=4, style=style)
                 if show_pct:
                     return f"5h: [{b_5h}] {l_5h:.0f}% | 7d: [{b_wk}] {l_wk:.0f}%"
                 else:
                     return f"5h: [{b_5h}] | 7d: [{b_wk}]"
             elif l_5h is not None:
-                b_5h = render_bar(l_5h, width=bar_width, style=style)
+                b_5h = render_bar(l_5h, width=4, style=style)
                 return f"5h: [{b_5h}] {l_5h:.0f}%" if show_pct else f"5h: [{b_5h}]"
             elif l_wk is not None:
-                b_wk = render_bar(l_wk, width=bar_width, style=style)
+                b_wk = render_bar(l_wk, width=4, style=style)
                 return f"7d: [{b_wk}] {l_wk:.0f}%" if show_pct else f"7d: [{b_wk}]"
             low = self.lowest_model
             if low:
-                b_low = render_bar(low.percentage, width=bar_width, style=style)
+                b_low = render_bar(low.percentage, width=4, style=style)
                 return f"[{b_low}] {low.percentage:.0f}%" if show_pct else f"[{b_low}]"
             return "100%"
 
         elif mode == DisplayMode.STATUS_BADGE:
             l_5h, l_wk = self.get_5h_and_weekly()
             if l_5h is not None and l_wk is not None:
-                b_5h = render_bar(l_5h, width=3, style="rect")
-                b_wk = render_bar(l_wk, width=3, style="rect")
+                b_5h = render_bar(l_5h, width=4, style="small_squares")
+                b_wk = render_bar(l_wk, width=4, style="small_squares")
                 s_5h = get_status_badge(l_5h)
                 s_wk = get_status_badge(l_wk)
                 return f"{s_5h} 5h: [{b_5h}] {l_5h:.0f}% | {s_wk} 7d: [{b_wk}] {l_wk:.0f}%"
             elif l_5h is not None:
-                b_5h = render_bar(l_5h, width=3, style="rect")
+                b_5h = render_bar(l_5h, width=4, style="small_squares")
                 return f"{get_status_badge(l_5h)} 5h: [{b_5h}] {l_5h:.0f}%"
             elif l_wk is not None:
-                b_wk = render_bar(l_wk, width=3, style="rect")
+                b_wk = render_bar(l_wk, width=4, style="small_squares")
                 return f"{get_status_badge(l_wk)} 7d: [{b_wk}] {l_wk:.0f}%"
             low = self.lowest_model
             return f"{get_status_badge(low.percentage if low else 100.0)} {low.percentage:.0f}%" if low else "🟢 100%"
@@ -403,7 +412,7 @@ class QuotaSnapshot:
         elif mode == DisplayMode.MINIMAL_LOWEST:
             low = self.lowest_model
             if low:
-                b_low = render_bar(low.percentage, width=3, style="rect")
+                b_low = render_bar(low.percentage, width=4, style="small_squares")
                 return f"[{b_low}] {low.percentage:.0f}%"
             return "100%"
 
