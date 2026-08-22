@@ -111,6 +111,15 @@ class TestModels(unittest.TestCase):
         # Status badge mode (4 blocks)
         self.assertEqual(snapshot.get_display_label(DisplayMode.STATUS_BADGE), "🟢 5h: [▪▪▪▫] 74% | 🟢 7d: [▪▪▪▫] 81%")
 
+        # Small color embed mode (4 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.SMALL_COLOR_EMBED), "5h: 🟢[▪▪▪▫] 74% | 7d: 🟢[▪▪▪▫] 81%")
+
+        # Small diamonds mode (4 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.SMALL_DIAMONDS), "5h: [🔹🔹🔹▫] 74% | 7d: [🔹🔹🔹▫] 81%")
+
+        # Small diamonds warm mode (4 blocks)
+        self.assertEqual(snapshot.get_display_label(DisplayMode.SMALL_DIAMONDS_WARM), "5h: [🔸🔸🔸▫] 74% | 7d: [🔸🔸🔸▫] 81%")
+
         # Color hearts mode
         self.assertEqual(snapshot.get_display_label(DisplayMode.COLOR_HEARTS), "5h: 💚 74% | 7d: 💚 81%")
 

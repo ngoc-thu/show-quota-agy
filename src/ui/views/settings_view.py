@@ -68,14 +68,17 @@ class SettingsView(Adw.PreferencesPage):
             subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
         )
         display_options = [
-            (DisplayMode.SMALL_SQUARES.value, "Khối vuông nhỏ tinh tế [▪▪▪▫]: 5h & 7d (Khuyến nghị)"),
+            (DisplayMode.STATUS_BADGE.value, "Đèn trạng thái màu 🟢 + Khối nhỏ [▪▪▪▫]: 5h & 7d (Khuyến nghị)"),
+            (DisplayMode.SMALL_COLOR_EMBED.value, "Đèn màu đính kèm khối 🟢[▪▪▪▫]: 5h & 7d"),
+            (DisplayMode.SMALL_DIAMONDS.value, "Kim cương nhỏ xanh [🔹🔹🔹▫]: 5h & 7d"),
+            (DisplayMode.SMALL_DIAMONDS_WARM.value, "Kim cương nhỏ cam [🔸🔸🔸▫]: 5h & 7d"),
+            (DisplayMode.SMALL_SQUARES.value, "Khối vuông nhỏ trắng đen [▪▪▪▫]: 5h & 7d"),
             (DisplayMode.MEDIUM_SQUARES.value, "Khối vuông vừa [◾◾◾◽]: 5h & 7d"),
             (DisplayMode.MINI_BARS.value, "Thanh chữ nhật mini [▰▰▰▱]: 5h & 7d"),
             (DisplayMode.CIRCLE_DOTS.value, "Chấm tròn [●●●○]: 5h & 7d"),
             (DisplayMode.BULLETS.value, "Chấm nhỏ Bullet [•••◦]: 5h & 7d"),
             (DisplayMode.VERTICAL_LINES.value, "Vạch đứng [▮▮▮▯]: 5h & 7d"),
             (DisplayMode.SOLID_BLOCKS.value, "Khối đặc [███░]: 5h & 7d"),
-            (DisplayMode.STATUS_BADGE.value, "Đèn trạng thái màu 🟢 + Khối nhỏ [▪▪▪▫]"),
             (DisplayMode.COLOR_BLOCKS.value, "Khối màu Emoji [🟩🟩🟩⬜]: 5h & 7d"),
             (DisplayMode.COLOR_DOTS.value, "Chấm màu Emoji [🟢🟢🟢⚪]: 5h & 7d"),
             (DisplayMode.COLOR_HEARTS.value, "Trái tim năng lượng 💚: 5h & 7d"),
@@ -174,6 +177,10 @@ class SettingsView(Adw.PreferencesPage):
 
     def _on_display_mode_changed(self, row, param):
         modes = [
+            DisplayMode.STATUS_BADGE,
+            DisplayMode.SMALL_COLOR_EMBED,
+            DisplayMode.SMALL_DIAMONDS,
+            DisplayMode.SMALL_DIAMONDS_WARM,
             DisplayMode.SMALL_SQUARES,
             DisplayMode.MEDIUM_SQUARES,
             DisplayMode.MINI_BARS,
@@ -181,7 +188,6 @@ class SettingsView(Adw.PreferencesPage):
             DisplayMode.BULLETS,
             DisplayMode.VERTICAL_LINES,
             DisplayMode.SOLID_BLOCKS,
-            DisplayMode.STATUS_BADGE,
             DisplayMode.COLOR_BLOCKS,
             DisplayMode.COLOR_DOTS,
             DisplayMode.COLOR_HEARTS,
