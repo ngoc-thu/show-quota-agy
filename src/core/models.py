@@ -56,18 +56,42 @@ class ConnectionState(str, Enum):
         return "⚠ Connection Error"
 
 
-def render_mini_bar(percentage: float, width: int = 4) -> str:
-    """Generates a compact mini progress bar e.g. ▰▰▰▱."""
+def render_bar(percentage: float, width: int = 4, style: str = "rect") -> str:
+    """Generates a compact mini progress bar with configurable style.
+
+    Styles:
+    - 'rect': ▰ and ▱
+    - 'block': █ and ░
+    - 'dots': ● and ○
+    - 'lines': ▮ and ▯
+    """
     pct = max(0.0, min(100.0, float(percentage)))
     filled = int(round((pct / 100.0) * width))
     empty = width - filled
+
+    if style == "block":
+        return "█" * filled + "░" * empty
+    elif style == "dots":
+        return "●" * filled + "○" * empty
+    elif style == "lines":
+        return "▮" * filled + "▯" * empty
     return "▰" * filled + "▱" * empty
 
 
+def render_mini_bar(percentage: float, width: int = 4) -> str:
+    """Generates a compact mini progress bar e.g. ▰▰▰▱."""
+    return render_bar(percentage, width=width, style="rect")
+
+
 class DisplayMode(str, Enum):
-    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▱] 74% | 7d: [▰▰▰▰] 79% (Khuyến nghị)
-    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: 74% | 7d: 79% (Dạng số)
-    LOWEST = "lowest"                          # Model thấp nhất
+    MINI_BARS = "mini_bars"                    # 5h: [▰▰▰▱] 70% | 7d: [▰▰▰▱] 78% (Thanh ▰▱)
+    SOLID_BLOCKS = "solid_blocks"              # 5h: [███░] 70% | 7d: [███░] 78% (Khối █░)
+    CIRCLE_DOTS = "circle_dots"                # 5h: [●●●○] 70% | 7d: [●●●○] 78% (Chấm ●○)
+    VERTICAL_LINES = "vertical_lines"          # 5h: [▮▮▮▯] 70% | 7d: [▮▮▮▯] 78% (Vạch ▮▯)
+    BARS_ONLY = "bars_only"                    # 5h: [▰▰▰▱] | 7d: [▰▰▰▱] (Chỉ thanh, ẩn %)
+    COMBINED_5H_WEEKLY = "combined_5h_weekly"  # 5h: 70% | 7d: 78% (Dạng số rút gọn)
+    MINIMAL_LOWEST = "minimal_lowest"          # [▰▰▰▱] 70% (Tối giản)
+    LOWEST = "lowest"                          # 70% (Chỉ số % thấp nhất)
     ACTIVE = "active"                          # Model mặc định / đang active
     GEMINI_ALL = "gemini_all"                  # Gemini: Cả 5h & 7d
     CLAUDE_ALL = "claude_all"                  # Claude/GPT: Cả 5h & 7d
@@ -227,7 +251,14 @@ class QuotaSnapshot:
             p_5h, p_wk = self.get_group_5h_and_weekly("claude")
             vals = [v for v in (p_5h, p_wk) if v is not None]
             return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
-        elif mode in (DisplayMode.MINI_BARS, DisplayMode.COMBINED_5H_WEEKLY):
+        elif mode in (
+            DisplayMode.MINI_BARS,
+            DisplayMode.SOLID_BLOCKS,
+            DisplayMode.CIRCLE_DOTS,
+            DisplayMode.VERTICAL_LINES,
+            DisplayMode.BARS_ONLY,
+            DisplayMode.COMBINED_5H_WEEKLY,
+        ):
             p_5h, p_wk = self.get_5h_and_weekly()
             vals = [v for v in (p_5h, p_wk) if v is not None]
             return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
@@ -236,21 +267,47 @@ class QuotaSnapshot:
         return low.percentage if low else 0.0
 
     def get_display_label(self, mode: DisplayMode = DisplayMode.MINI_BARS) -> str:
-        if mode == DisplayMode.MINI_BARS:
+        if mode in (
+            DisplayMode.MINI_BARS,
+            DisplayMode.SOLID_BLOCKS,
+            DisplayMode.CIRCLE_DOTS,
+            DisplayMode.VERTICAL_LINES,
+            DisplayMode.BARS_ONLY,
+        ):
+            style_map = {
+                DisplayMode.MINI_BARS: "rect",
+                DisplayMode.SOLID_BLOCKS: "block",
+                DisplayMode.CIRCLE_DOTS: "dots",
+                DisplayMode.VERTICAL_LINES: "lines",
+                DisplayMode.BARS_ONLY: "rect",
+            }
+            style = style_map.get(mode, "rect")
+            show_pct = (mode != DisplayMode.BARS_ONLY)
+
             l_5h, l_wk = self.get_5h_and_weekly()
             if l_5h is not None and l_wk is not None:
-                b_5h = render_mini_bar(l_5h, width=4)
-                b_wk = render_mini_bar(l_wk, width=4)
-                return f"5h: [{b_5h}] {l_5h:.0f}% | 7d: [{b_wk}] {l_wk:.0f}%"
+                b_5h = render_bar(l_5h, width=4, style=style)
+                b_wk = render_bar(l_wk, width=4, style=style)
+                if show_pct:
+                    return f"5h: [{b_5h}] {l_5h:.0f}% | 7d: [{b_wk}] {l_wk:.0f}%"
+                else:
+                    return f"5h: [{b_5h}] | 7d: [{b_wk}]"
             elif l_5h is not None:
-                b_5h = render_mini_bar(l_5h, width=4)
-                return f"5h: [{b_5h}] {l_5h:.0f}%"
+                b_5h = render_bar(l_5h, width=4, style=style)
+                return f"5h: [{b_5h}] {l_5h:.0f}%" if show_pct else f"5h: [{b_5h}]"
             elif l_wk is not None:
-                b_wk = render_mini_bar(l_wk, width=4)
-                return f"7d: [{b_wk}] {l_wk:.0f}%"
+                b_wk = render_bar(l_wk, width=4, style=style)
+                return f"7d: [{b_wk}] {l_wk:.0f}%" if show_pct else f"7d: [{b_wk}]"
             low = self.lowest_model
             if low:
-                b_low = render_mini_bar(low.percentage, width=4)
+                b_low = render_bar(low.percentage, width=4, style=style)
+                return f"[{b_low}] {low.percentage:.0f}%" if show_pct else f"[{b_low}]"
+            return "100%"
+
+        elif mode == DisplayMode.MINIMAL_LOWEST:
+            low = self.lowest_model
+            if low:
+                b_low = render_bar(low.percentage, width=4, style="rect")
                 return f"[{b_low}] {low.percentage:.0f}%"
             return "100%"
 
@@ -268,46 +325,45 @@ class QuotaSnapshot:
         elif mode == DisplayMode.GEMINI_ALL:
             g_5h, g_wk = self.get_group_5h_and_weekly("gemini")
             if g_5h is not None and g_wk is not None:
-                b_5h = render_mini_bar(g_5h, width=4)
-                b_wk = render_mini_bar(g_wk, width=4)
+                b_5h = render_bar(g_5h, width=4, style="rect")
+                b_wk = render_bar(g_wk, width=4, style="rect")
                 return f"G: [{b_5h}] 5h {g_5h:.0f}% | [{b_wk}] 7d {g_wk:.0f}%"
             elif g_5h is not None:
-                b_5h = render_mini_bar(g_5h, width=4)
+                b_5h = render_bar(g_5h, width=4, style="rect")
                 return f"Gemini 5h: [{b_5h}] {g_5h:.0f}%"
             return f"{self.get_display_percentage(mode):.0f}%"
 
         elif mode == DisplayMode.CLAUDE_ALL:
             c_5h, c_wk = self.get_group_5h_and_weekly("claude")
             if c_5h is not None and c_wk is not None:
-                b_5h = render_mini_bar(c_5h, width=4)
-                b_wk = render_mini_bar(c_wk, width=4)
+                b_5h = render_bar(c_5h, width=4, style="rect")
+                b_wk = render_bar(c_wk, width=4, style="rect")
                 return f"C: [{b_5h}] 5h {c_5h:.0f}% | [{b_wk}] 7d {c_wk:.0f}%"
             elif c_5h is not None:
-                b_5h = render_mini_bar(c_5h, width=4)
+                b_5h = render_bar(c_5h, width=4, style="rect")
                 return f"Claude 5h: [{b_5h}] {c_5h:.0f}%"
             return f"{self.get_display_percentage(mode):.0f}%"
 
         elif mode == DisplayMode.GEMINI_5H:
             pct = self.get_display_percentage(mode)
-            b = render_mini_bar(pct, width=4)
+            b = render_bar(pct, width=4, style="rect")
             return f"Gemini 5h: [{b}] {pct:.0f}%"
 
         elif mode == DisplayMode.CLAUDE_5H:
             pct = self.get_display_percentage(mode)
-            b = render_mini_bar(pct, width=4)
+            b = render_bar(pct, width=4, style="rect")
             return f"Claude 5h: [{b}] {pct:.0f}%"
 
         elif mode == DisplayMode.ACTIVE:
             act = self.active_model
             if act:
-                b = render_mini_bar(act.percentage, width=4)
+                b = render_bar(act.percentage, width=4, style="rect")
                 return f"[{b}] {act.percentage:.0f}%"
             return "100%"
 
         # Default or LOWEST
         pct = self.get_display_percentage(mode)
-        b = render_mini_bar(pct, width=4)
-        return f"[{b}] {pct:.0f}%"
+        return f"{pct:.0f}%"
 
     def to_dict(self) -> Dict[str, Any]:
         return {

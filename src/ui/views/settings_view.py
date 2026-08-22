@@ -68,9 +68,14 @@ class SettingsView(Adw.PreferencesPage):
             subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
         )
         display_options = [
-            (DisplayMode.MINI_BARS.value, "Biểu đồ Mini Bar: 5h [▰▰▰▱] 74% | 7d [▰▰▰▰] 79% (Khuyến nghị)"),
-            (DisplayMode.COMBINED_5H_WEEKLY.value, "Dạng số rút gọn: 5h 74% | 7d 79%"),
-            (DisplayMode.LOWEST.value, "Chỉ hiển thị % thấp nhất"),
+            (DisplayMode.MINI_BARS.value, "Thanh Mini Bar [▰▰▰▱]: 5h & 7d (Khuyến nghị)"),
+            (DisplayMode.SOLID_BLOCKS.value, "Khối vuông đặc [███░]: 5h & 7d"),
+            (DisplayMode.CIRCLE_DOTS.value, "Chấm tròn [●●●○]: 5h & 7d"),
+            (DisplayMode.VERTICAL_LINES.value, "Vạch đứng [▮▮▮▯]: 5h & 7d"),
+            (DisplayMode.BARS_ONLY.value, "Chỉ thanh Mini Bar (Ẩn %): 5h [▰▰▰▱] | 7d [▰▰▰▱]"),
+            (DisplayMode.COMBINED_5H_WEEKLY.value, "Dạng số rút gọn: 5h 70% | 7d 78%"),
+            (DisplayMode.MINIMAL_LOWEST.value, "Tối giản: [▰▰▰▱] 70%"),
+            (DisplayMode.LOWEST.value, "Chỉ số % thấp nhất: 70%"),
             (DisplayMode.ACTIVE.value, "Model đang chọn / mặc định"),
             (DisplayMode.GEMINI_ALL.value, "Gemini: Cả 5h & 7d"),
             (DisplayMode.CLAUDE_ALL.value, "Claude/GPT: Cả 5h & 7d"),
@@ -163,7 +168,12 @@ class SettingsView(Adw.PreferencesPage):
     def _on_display_mode_changed(self, row, param):
         modes = [
             DisplayMode.MINI_BARS,
+            DisplayMode.SOLID_BLOCKS,
+            DisplayMode.CIRCLE_DOTS,
+            DisplayMode.VERTICAL_LINES,
+            DisplayMode.BARS_ONLY,
             DisplayMode.COMBINED_5H_WEEKLY,
+            DisplayMode.MINIMAL_LOWEST,
             DisplayMode.LOWEST,
             DisplayMode.ACTIVE,
             DisplayMode.GEMINI_ALL,

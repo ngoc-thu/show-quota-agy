@@ -82,6 +82,21 @@ class TestModels(unittest.TestCase):
         self.assertEqual(snapshot.get_display_label(DisplayMode.MINI_BARS), "5h: [▰▰▰▱] 74% | 7d: [▰▰▰▱] 81%")
         self.assertEqual(snapshot.get_display_percentage(DisplayMode.MINI_BARS), 74.0)
 
+        # Solid blocks mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.SOLID_BLOCKS), "5h: [███░] 74% | 7d: [███░] 81%")
+
+        # Circle dots mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.CIRCLE_DOTS), "5h: [●●●○] 74% | 7d: [●●●○] 81%")
+
+        # Vertical lines mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.VERTICAL_LINES), "5h: [▮▮▮▯] 74% | 7d: [▮▮▮▯] 81%")
+
+        # Bars only mode
+        self.assertEqual(snapshot.get_display_label(DisplayMode.BARS_ONLY), "5h: [▰▰▰▱] | 7d: [▰▰▰▱]")
+
+        # Minimal lowest
+        self.assertEqual(snapshot.get_display_label(DisplayMode.MINIMAL_LOWEST), "[▰▰▱▱] 43%")
+
 
 if __name__ == "__main__":
     unittest.main()

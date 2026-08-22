@@ -189,6 +189,8 @@ class QuotaService:
         """Updates settings in memory and persists to database."""
         self.settings = new_settings
         self.settings_repo.save_settings(new_settings)
+        if self.current_snapshot:
+            self._notify_listeners(self.current_snapshot)
         logger.info("Application settings updated.")
 
     def start_auto_refresh(self):
