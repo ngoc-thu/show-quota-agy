@@ -364,6 +364,21 @@ class QuotaSnapshot:
         mode: DisplayMode = DisplayMode.MINI_BARS,
         selected_model_id: Optional[str] = None,
     ) -> float:
+        if selected_model_id in ("gemini_all", "gemini"):
+            p_5h, p_wk = self.get_group_5h_and_weekly("gemini")
+            vals = [v for v in (p_5h, p_wk) if v is not None]
+            return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
+        elif selected_model_id in ("claude_all", "claude"):
+            p_5h, p_wk = self.get_group_5h_and_weekly("claude")
+            vals = [v for v in (p_5h, p_wk) if v is not None]
+            return min(vals) if vals else (self.lowest_model.percentage if self.lowest_model else 0.0)
+        elif selected_model_id == "gemini_5h":
+            p_5h, _ = self.get_group_5h_and_weekly("gemini")
+            return p_5h if p_5h is not None else (self.lowest_model.percentage if self.lowest_model else 0.0)
+        elif selected_model_id == "claude_5h":
+            p_5h, _ = self.get_group_5h_and_weekly("claude")
+            return p_5h if p_5h is not None else (self.lowest_model.percentage if self.lowest_model else 0.0)
+
         target_m = self.get_target_model(selected_model_id)
         if target_m is not None:
             return target_m.percentage
@@ -415,8 +430,6 @@ class QuotaSnapshot:
         mode: DisplayMode = DisplayMode.STATUS_BADGE,
         selected_model_id: Optional[str] = None,
     ) -> str:
-        target_m = self.get_target_model(selected_model_id)
-
         # Style map for rendering bars
         style_map = {
             DisplayMode.SMALL_SQUARES: "small_squares",
@@ -435,7 +448,52 @@ class QuotaSnapshot:
         style = style_map.get(mode, "small_squares")
         show_pct = (mode != DisplayMode.BARS_ONLY)
 
-        # Case 1: Specific Model Override is Selected
+        # Group overrides
+        if selected_model_id in ("gemini_all", "gemini"):
+            p_5h, p_wk = self.get_group_5h_and_weekly("gemini")
+            if p_5h is not None and p_wk is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                b_wk = render_bar(p_wk, width=4, style=style)
+                if mode == DisplayMode.STATUS_BADGE:
+                    return f"{get_status_badge(p_5h)} Gemini: 5h [{b_5h}] {p_5h:.0f}% | {get_status_badge(p_wk)} 7d [{b_wk}] {p_wk:.0f}%"
+                elif mode == DisplayMode.SMALL_COLOR_EMBED:
+                    return f"Gemini: {get_status_badge(p_5h)}5h[{b_5h}] {p_5h:.0f}% | {get_status_badge(p_wk)}7d[{b_wk}] {p_wk:.0f}%"
+                elif show_pct:
+                    return f"Gemini: 5h [{b_5h}] {p_5h:.0f}% | 7d [{b_wk}] {p_wk:.0f}%"
+                else:
+                    return f"Gemini: 5h [{b_5h}] | 7d [{b_wk}]"
+
+        if selected_model_id in ("claude_all", "claude"):
+            p_5h, p_wk = self.get_group_5h_and_weekly("claude")
+            if p_5h is not None and p_wk is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                b_wk = render_bar(p_wk, width=4, style=style)
+                if mode == DisplayMode.STATUS_BADGE:
+                    return f"{get_status_badge(p_5h)} Claude: 5h [{b_5h}] {p_5h:.0f}% | {get_status_badge(p_wk)} 7d [{b_wk}] {p_wk:.0f}%"
+                elif mode == DisplayMode.SMALL_COLOR_EMBED:
+                    return f"Claude: {get_status_badge(p_5h)}5h[{b_5h}] {p_5h:.0f}% | {get_status_badge(p_wk)}7d[{b_wk}] {p_wk:.0f}%"
+                elif show_pct:
+                    return f"Claude: 5h [{b_5h}] {p_5h:.0f}% | 7d [{b_wk}] {p_wk:.0f}%"
+                else:
+                    return f"Claude: 5h [{b_5h}] | 7d [{b_wk}]"
+
+        if selected_model_id == "gemini_5h":
+            p_5h, _ = self.get_group_5h_and_weekly("gemini")
+            if p_5h is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                badge = get_status_badge(p_5h) if mode == DisplayMode.STATUS_BADGE else ""
+                prefix = f"{badge} " if badge else ""
+                return f"{prefix}Gemini 5h: [{b_5h}] {p_5h:.0f}%" if show_pct else f"{prefix}Gemini 5h: [{b_5h}]"
+
+        if selected_model_id == "claude_5h":
+            p_5h, _ = self.get_group_5h_and_weekly("claude")
+            if p_5h is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                badge = get_status_badge(p_5h) if mode == DisplayMode.STATUS_BADGE else ""
+                prefix = f"{badge} " if badge else ""
+                return f"{prefix}Claude 5h: [{b_5h}] {p_5h:.0f}%" if show_pct else f"{prefix}Claude 5h: [{b_5h}]"
+
+        target_m = self.get_target_model(selected_model_id)
         if target_m is not None:
             m_name = shorten_model_name(target_m.model_name)
             pct = target_m.percentage

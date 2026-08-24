@@ -32,21 +32,12 @@ class SettingsView(Adw.PreferencesPage):
 
     def _build_model_options(self):
         options = [
-            (None, "Tất cả / Hạn mức chung (5h & 7d)"),
-            ("active", "Model đang kích hoạt / mặc định"),
-            ("lowest", "Model có hạn mức thấp nhất"),
+            (None, "Tất cả / Chung (Cả 2 nhóm Gemini & Claude/GPT — Mặc định)"),
+            ("gemini_all", "Nhóm Gemini Models (Cả 5h & 7d)"),
+            ("claude_all", "Nhóm Claude & GPT Models (Cả 5h & 7d)"),
+            ("gemini_5h", "Chỉ hạn mức 5h của Gemini"),
+            ("claude_5h", "Chỉ hạn mức 5h của Claude & GPT"),
         ]
-
-        if self.models:
-            # Filter internal slots
-            visible = [
-                m for m in self.models.values()
-                if not m.model_id.startswith("chat_") and not m.model_id.startswith("tab_")
-            ]
-            sorted_m = sorted(visible, key=lambda m: (not m.recommended, m.category, m.model_name))
-            for m in sorted_m:
-                options.append((m.model_id, f"{m.model_name} ({m.percentage:.0f}%)"))
-
         self.model_options = options
         return options
 
