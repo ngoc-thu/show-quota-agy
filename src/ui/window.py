@@ -134,6 +134,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.settings_view = SettingsView(
             settings=self.service.settings,
             on_save_callback=self._on_settings_saved,
+            models=self.service.current_snapshot.models if self.service.current_snapshot else None,
         )
         self.view_stack.add_named(self.settings_view, "settings")
 
@@ -190,6 +191,8 @@ class MainWindow(Adw.ApplicationWindow):
     def _apply_snapshot(self, snapshot: QuotaSnapshot):
         self.overview_view.update_snapshot(snapshot)
         self.overview_view.set_loading(False)
+        if snapshot and snapshot.models:
+            self.settings_view.update_models(snapshot.models)
 
     def _trigger_refresh(self):
         self.overview_view.set_loading(True)

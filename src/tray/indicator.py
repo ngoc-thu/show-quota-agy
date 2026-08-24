@@ -105,7 +105,10 @@ class TopBarIndicator:
 
         # 1. Update Top Bar Label
         if snapshot and snapshot.connection_state == ConnectionState.CONNECTED:
-            label = snapshot.get_display_label(self.service.settings.display_mode)
+            label = snapshot.get_display_label(
+                mode=self.service.settings.display_mode,
+                selected_model_id=self.service.settings.selected_model_override,
+            )
         elif snapshot and snapshot.connection_state == ConnectionState.AUTH_REQUIRED:
             label = "🔐"
         elif snapshot and snapshot.connection_state == ConnectionState.OFFLINE:

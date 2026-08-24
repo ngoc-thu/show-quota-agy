@@ -4,8 +4,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw
-from typing import Callable, Optional
-from ...core.models import AppSettings, DisplayMode
+from typing import Callable, Optional, Dict
+from ...core.models import AppSettings, DisplayMode, QuotaInfo
 from ...core.config import INTERVAL_OPTIONS
 from ...autostart.manager import AutostartManager
 from ...antigravity.detector import AntigravityDetector
@@ -15,12 +15,58 @@ from ...core.logger import logger
 class SettingsView(Adw.PreferencesPage):
     """Settings preferences page for configuring application behavior."""
 
-    def __init__(self, settings: AppSettings, on_save_callback: Optional[Callable[[AppSettings], None]] = None):
+    def __init__(
+        self,
+        settings: AppSettings,
+        on_save_callback: Optional[Callable[[AppSettings], None]] = None,
+        models: Optional[Dict[str, QuotaInfo]] = None,
+    ):
         super().__init__()
         self.settings = settings
         self.on_save_callback = on_save_callback
+        self.models = models or {}
+        self.model_options = []
+        self._updating_models = False
 
         self._build_ui()
+
+    def _build_model_options(self):
+        options = [
+            (None, "Tất cả / Hạn mức chung (5h & 7d)"),
+            ("active", "Model đang kích hoạt / mặc định"),
+            ("lowest", "Model có hạn mức thấp nhất"),
+        ]
+
+        if self.models:
+            # Filter internal slots
+            visible = [
+                m for m in self.models.values()
+                if not m.model_id.startswith("chat_") and not m.model_id.startswith("tab_")
+            ]
+            sorted_m = sorted(visible, key=lambda m: (not m.recommended, m.category, m.model_name))
+            for m in sorted_m:
+                options.append((m.model_id, f"{m.model_name} ({m.percentage:.0f}%)"))
+
+        self.model_options = options
+        return options
+
+    def update_models(self, models: Dict[str, QuotaInfo]):
+        """Dynamically updates the model list dropdown when new snapshot arrives."""
+        self.models = models
+        options = self._build_model_options()
+        self._updating_models = True
+        model_strings = Gtk.StringList.new([opt[1] for opt in options])
+        self.model_row.set_model(model_strings)
+
+        selected_idx = 0
+        curr_val = self.settings.selected_model_override
+        if curr_val:
+            for idx, (val, _) in enumerate(options):
+                if val == curr_val:
+                    selected_idx = idx
+                    break
+        self.model_row.set_selected(selected_idx)
+        self._updating_models = False
 
     def _build_ui(self):
         # 1. General Preferences Group
@@ -64,8 +110,8 @@ class SettingsView(Adw.PreferencesPage):
 
         # Display Mode Row
         self.display_row = Adw.ComboRow(
-            title="Hiển thị trên Top Bar",
-            subtitle="Giá trị và định dạng hiển thị trên thanh tác vụ",
+            title="Kiểu thanh tiến trình trên Top Bar",
+            subtitle="Định dạng và biểu tượng thanh đo trên thanh tác vụ",
         )
         display_options = [
             (DisplayMode.STATUS_BADGE.value, "Đèn trạng thái màu 🟢 + Khối nhỏ [▪▪▪▫]: 5h & 7d (Khuyến nghị)"),
@@ -100,6 +146,25 @@ class SettingsView(Adw.PreferencesPage):
                 break
         self.display_row.connect("notify::selected", self._on_display_mode_changed)
         general_group.add(self.display_row)
+
+        # Specific Model Tracking Row
+        self.model_row = Adw.ComboRow(
+            title="Theo dõi Model cụ thể",
+            subtitle="Chọn hiển thị hạn mức của một model riêng hoặc tự động theo nhóm",
+        )
+        options = self._build_model_options()
+        model_strings = Gtk.StringList.new([opt[1] for opt in options])
+        self.model_row.set_model(model_strings)
+        selected_idx = 0
+        curr_val = self.settings.selected_model_override
+        if curr_val:
+            for idx, (val, _) in enumerate(options):
+                if val == curr_val:
+                    selected_idx = idx
+                    break
+        self.model_row.set_selected(selected_idx)
+        self.model_row.connect("notify::selected", self._on_model_changed)
+        general_group.add(self.model_row)
 
         self.add(general_group)
 
@@ -204,6 +269,15 @@ class SettingsView(Adw.PreferencesPage):
         idx = row.get_selected()
         if 0 <= idx < len(modes):
             self.settings.display_mode = modes[idx]
+            self._save()
+
+    def _on_model_changed(self, row, param):
+        if self._updating_models:
+            return
+        idx = row.get_selected()
+        if 0 <= idx < len(self.model_options):
+            val = self.model_options[idx][0]
+            self.settings.selected_model_override = val
             self._save()
 
     def _on_setting_changed(self, *args):

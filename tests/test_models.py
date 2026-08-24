@@ -126,6 +126,20 @@ class TestModels(unittest.TestCase):
         # Minimal lowest (4 blocks)
         self.assertEqual(snapshot.get_display_label(DisplayMode.MINIMAL_LOWEST), "[▪▪▫▫] 43%")
 
+        # Specific model override
+        self.assertEqual(
+            snapshot.get_display_label(DisplayMode.SMALL_DIAMONDS, selected_model_id="claude"),
+            "Claude: [🔸🔸▫▫] 43%",
+        )
+        self.assertEqual(
+            snapshot.get_display_label(DisplayMode.STATUS_BADGE, selected_model_id="gemini-pro"),
+            "🟢 Gemini Pro: [▪▪▪▪] 88%",
+        )
+        self.assertEqual(
+            snapshot.get_display_percentage(selected_model_id="claude"),
+            43.0,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

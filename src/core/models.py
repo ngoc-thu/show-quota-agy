@@ -110,6 +110,29 @@ def get_dot_char(percentage: float) -> str:
         return "🔴"
 
 
+def shorten_model_name(name: str) -> str:
+    """Shortens verbose model names for compact Top Bar display."""
+    clean = (
+        name.replace("(Thinking)", "")
+        .replace("(High)", "")
+        .replace("(Medium)", "")
+        .replace("(Low)", "")
+        .replace("(Extra Low)", "")
+        .strip()
+    )
+    if "Claude Opus" in clean:
+        return "Claude Opus"
+    if "Claude Sonnet" in clean:
+        return "Claude Sonnet"
+    if "Claude Haiku" in clean:
+        return "Claude Haiku"
+    if "GPT-OSS" in clean:
+        return "GPT-OSS"
+    if "Gemini" in clean:
+        return clean.replace("Google ", "").strip()
+    return clean[:16]
+
+
 def render_bar(percentage: float, width: int = 4, style: str = "diamonds") -> str:
     """Generates a compact progress bar with configurable style.
 
@@ -320,7 +343,31 @@ class QuotaSnapshot:
                         p_weekly = b.percentage
         return p_5h, p_weekly
 
-    def get_display_percentage(self, mode: DisplayMode = DisplayMode.MINI_BARS) -> float:
+    def get_target_model(self, selected_model_id: Optional[str] = None) -> Optional[QuotaInfo]:
+        """Resolves target model based on ID or fallback to active/lowest."""
+        if not selected_model_id or selected_model_id in ("auto", "none", ""):
+            return None
+        if selected_model_id == "active":
+            return self.active_model
+        if selected_model_id == "lowest":
+            return self.lowest_model
+        if selected_model_id in self.models:
+            return self.models[selected_model_id]
+        # Search by partial match / model_name
+        for mid, m in self.models.items():
+            if selected_model_id.lower() in mid.lower() or selected_model_id.lower() in m.model_name.lower():
+                return m
+        return None
+
+    def get_display_percentage(
+        self,
+        mode: DisplayMode = DisplayMode.MINI_BARS,
+        selected_model_id: Optional[str] = None,
+    ) -> float:
+        target_m = self.get_target_model(selected_model_id)
+        if target_m is not None:
+            return target_m.percentage
+
         if mode == DisplayMode.ACTIVE:
             act = self.active_model
             return act.percentage if act else 0.0
@@ -363,7 +410,56 @@ class QuotaSnapshot:
         low = self.lowest_model
         return low.percentage if low else 0.0
 
-    def get_display_label(self, mode: DisplayMode = DisplayMode.STATUS_BADGE) -> str:
+    def get_display_label(
+        self,
+        mode: DisplayMode = DisplayMode.STATUS_BADGE,
+        selected_model_id: Optional[str] = None,
+    ) -> str:
+        target_m = self.get_target_model(selected_model_id)
+
+        # Style map for rendering bars
+        style_map = {
+            DisplayMode.SMALL_SQUARES: "small_squares",
+            DisplayMode.MEDIUM_SQUARES: "medium_squares",
+            DisplayMode.SMALL_DIAMONDS: "diamonds",
+            DisplayMode.SMALL_DIAMONDS_WARM: "diamonds_orange",
+            DisplayMode.MINI_BARS: "rect",
+            DisplayMode.CIRCLE_DOTS: "dots",
+            DisplayMode.BULLETS: "bullets",
+            DisplayMode.VERTICAL_LINES: "lines",
+            DisplayMode.SOLID_BLOCKS: "block",
+            DisplayMode.COLOR_BLOCKS: "color_blocks",
+            DisplayMode.COLOR_DOTS: "color_dots",
+            DisplayMode.BARS_ONLY: "small_squares",
+        }
+        style = style_map.get(mode, "small_squares")
+        show_pct = (mode != DisplayMode.BARS_ONLY)
+
+        # Case 1: Specific Model Override is Selected
+        if target_m is not None:
+            m_name = shorten_model_name(target_m.model_name)
+            pct = target_m.percentage
+            bar = render_bar(pct, width=4, style=style)
+
+            if mode == DisplayMode.STATUS_BADGE:
+                badge = get_status_badge(pct)
+                return f"{badge} {m_name}: [{bar}] {pct:.0f}%" if show_pct else f"{badge} {m_name}: [{bar}]"
+            elif mode == DisplayMode.SMALL_COLOR_EMBED:
+                badge = get_status_badge(pct)
+                return f"{m_name}: {badge}[{bar}] {pct:.0f}%" if show_pct else f"{m_name}: {badge}[{bar}]"
+            elif mode == DisplayMode.COLOR_HEARTS:
+                heart = get_heart_icon(pct)
+                return f"{m_name}: {heart} {pct:.0f}%"
+            elif mode == DisplayMode.COMBINED_5H_WEEKLY:
+                return f"{m_name}: {pct:.0f}%"
+            elif mode == DisplayMode.MINIMAL_LOWEST:
+                return f"[{bar}] {pct:.0f}%"
+            elif mode == DisplayMode.LOWEST:
+                return f"{pct:.0f}%"
+            else:
+                return f"{m_name}: [{bar}] {pct:.0f}%" if show_pct else f"{m_name}: [{bar}]"
+
+        # Case 2: Group / Auto / 5h & 7d display modes
         if mode in (
             DisplayMode.SMALL_SQUARES,
             DisplayMode.MEDIUM_SQUARES,
@@ -378,23 +474,6 @@ class QuotaSnapshot:
             DisplayMode.COLOR_DOTS,
             DisplayMode.BARS_ONLY,
         ):
-            style_map = {
-                DisplayMode.SMALL_SQUARES: "small_squares",
-                DisplayMode.MEDIUM_SQUARES: "medium_squares",
-                DisplayMode.SMALL_DIAMONDS: "diamonds",
-                DisplayMode.SMALL_DIAMONDS_WARM: "diamonds_orange",
-                DisplayMode.MINI_BARS: "rect",
-                DisplayMode.CIRCLE_DOTS: "dots",
-                DisplayMode.BULLETS: "bullets",
-                DisplayMode.VERTICAL_LINES: "lines",
-                DisplayMode.SOLID_BLOCKS: "block",
-                DisplayMode.COLOR_BLOCKS: "color_blocks",
-                DisplayMode.COLOR_DOTS: "color_dots",
-                DisplayMode.BARS_ONLY: "small_squares",
-            }
-            style = style_map.get(mode, "small_squares")
-            show_pct = (mode != DisplayMode.BARS_ONLY)
-
             l_5h, l_wk = self.get_5h_and_weekly()
             if l_5h is not None and l_wk is not None:
                 b_5h = render_bar(l_5h, width=4, style=style)
@@ -478,48 +557,55 @@ class QuotaSnapshot:
             low = self.lowest_model
             return f"{low.percentage:.0f}%" if low else "100%"
 
-        elif mode == DisplayMode.GEMINI_ALL:
-            g_5h, g_wk = self.get_group_5h_and_weekly("gemini")
-            if g_5h is not None and g_wk is not None:
-                b_5h = render_bar(g_5h, width=3, style="rect")
-                b_wk = render_bar(g_wk, width=3, style="rect")
-                return f"G: [{b_5h}] 5h {g_5h:.0f}% | [{b_wk}] 7d {g_wk:.0f}%"
-            elif g_5h is not None:
-                b_5h = render_bar(g_5h, width=3, style="rect")
-                return f"Gemini 5h: [{b_5h}] {g_5h:.0f}%"
-            return f"{self.get_display_percentage(mode):.0f}%"
-
-        elif mode == DisplayMode.CLAUDE_ALL:
-            c_5h, c_wk = self.get_group_5h_and_weekly("claude")
-            if c_5h is not None and c_wk is not None:
-                b_5h = render_bar(c_5h, width=3, style="rect")
-                b_wk = render_bar(c_wk, width=3, style="rect")
-                return f"C: [{b_5h}] 5h {c_5h:.0f}% | [{b_wk}] 7d {c_wk:.0f}%"
-            elif c_5h is not None:
-                b_5h = render_bar(c_5h, width=3, style="rect")
-                return f"Claude 5h: [{b_5h}] {c_5h:.0f}%"
-            return f"{self.get_display_percentage(mode):.0f}%"
-
-        elif mode == DisplayMode.GEMINI_5H:
-            pct = self.get_display_percentage(mode)
-            b = render_bar(pct, width=3, style="rect")
-            return f"Gemini 5h: [{b}] {pct:.0f}%"
-
-        elif mode == DisplayMode.CLAUDE_5H:
-            pct = self.get_display_percentage(mode)
-            b = render_bar(pct, width=3, style="rect")
-            return f"Claude 5h: [{b}] {pct:.0f}%"
+        elif mode == DisplayMode.LOWEST:
+            low = self.lowest_model
+            return f"{low.percentage:.0f}%" if low else "100%"
 
         elif mode == DisplayMode.ACTIVE:
             act = self.active_model
             if act:
-                b = render_bar(act.percentage, width=3, style="rect")
-                return f"[{b}] {act.percentage:.0f}%"
+                m_name = shorten_model_name(act.model_name)
+                b = render_bar(act.percentage, width=4, style=style)
+                return f"{m_name}: [{b}] {act.percentage:.0f}%" if show_pct else f"{m_name}: [{b}]"
             return "100%"
 
-        # Default or LOWEST
-        pct = self.get_display_percentage(mode)
-        return f"{pct:.0f}%"
+        elif mode == DisplayMode.GEMINI_ALL:
+            p_5h, p_wk = self.get_group_5h_and_weekly("gemini")
+            if p_5h is not None and p_wk is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                b_wk = render_bar(p_wk, width=4, style=style)
+                return f"Gemini 5h: [{b_5h}] {p_5h:.0f}% | 7d: [{b_wk}] {p_wk:.0f}%"
+            elif p_5h is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                return f"Gemini 5h: [{b_5h}] {p_5h:.0f}%"
+            return "100%"
+
+        elif mode == DisplayMode.CLAUDE_ALL:
+            p_5h, p_wk = self.get_group_5h_and_weekly("claude")
+            if p_5h is not None and p_wk is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                b_wk = render_bar(p_wk, width=4, style=style)
+                return f"Claude 5h: [{b_5h}] {p_5h:.0f}% | 7d: [{b_wk}] {p_wk:.0f}%"
+            elif p_5h is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                return f"Claude 5h: [{b_5h}] {p_5h:.0f}%"
+            return "100%"
+
+        elif mode == DisplayMode.GEMINI_5H:
+            p_5h, _ = self.get_group_5h_and_weekly("gemini")
+            if p_5h is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                return f"Gemini 5h: [{b_5h}] {p_5h:.0f}%"
+            return "100%"
+
+        elif mode == DisplayMode.CLAUDE_5H:
+            p_5h, _ = self.get_group_5h_and_weekly("claude")
+            if p_5h is not None:
+                b_5h = render_bar(p_5h, width=4, style=style)
+                return f"Claude 5h: [{b_5h}] {p_5h:.0f}%"
+            return "100%"
+
+        return "100%"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
