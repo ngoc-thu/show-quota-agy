@@ -36,7 +36,8 @@ Fallback credential locations:
 Antigravity communicates with Google CloudCode PA (Prediction Service) backend:
 
 ### 2.1 Available Models & Quotas
-- **URL**: `https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels`
+- **Primary URL**: `https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels`
+- **Fallback URL**: `https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels`
 - **Method**: `POST`
 - **Headers**:
   - `Authorization: Bearer <access_token>`
@@ -69,7 +70,8 @@ Antigravity communicates with Google CloudCode PA (Prediction Service) backend:
 ```
 
 ### 2.2 Quota Summary & Rate Limit Groups
-- **URL**: `https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`
+- **Primary URL**: `https://daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`
+- **Fallback URL**: `https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`
 - **Method**: `POST`
 - **Body**: `{}`
 - **Response**:

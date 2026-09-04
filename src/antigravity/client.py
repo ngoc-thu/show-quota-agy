@@ -5,7 +5,12 @@ import urllib.request
 import urllib.error
 from typing import Dict, Any, Optional
 from ..core.logger import logger
-from ..core.config import API_FETCH_MODELS_URL, API_QUOTA_SUMMARY_URL
+from ..core.config import (
+    API_FETCH_MODELS_URL,
+    API_QUOTA_SUMMARY_URL,
+    API_FALLBACK_FETCH_MODELS_URL,
+    API_FALLBACK_QUOTA_SUMMARY_URL,
+)
 from .auth import AntigravityAuthProvider, AuthError
 
 
@@ -37,14 +42,33 @@ class AntigravityClient:
         self.timeout_sec = timeout_sec
 
     def fetch_available_models(self, force_refresh: bool = False) -> Dict[str, Any]:
-        """Queries :fetchAvailableModels endpoint."""
-        token = self.auth_provider.get_access_token(force_refresh=force_refresh)
-        return self._post_json(API_FETCH_MODELS_URL, token)
+        """Queries :fetchAvailableModels endpoint with fallback and auto-refresh on 401."""
+        try:
+            token = self.auth_provider.get_access_token(force_refresh=force_refresh)
+            return self._fetch_with_fallback(API_FETCH_MODELS_URL, API_FALLBACK_FETCH_MODELS_URL, token)
+        except ClientAuthError:
+            logger.info("Access token rejected (401), reloading from GNOME Keyring...")
+            token = self.auth_provider.get_access_token(force_refresh=True)
+            return self._fetch_with_fallback(API_FETCH_MODELS_URL, API_FALLBACK_FETCH_MODELS_URL, token)
 
     def fetch_quota_summary(self, force_refresh: bool = False) -> Dict[str, Any]:
-        """Queries :retrieveUserQuotaSummary endpoint."""
-        token = self.auth_provider.get_access_token(force_refresh=force_refresh)
-        return self._post_json(API_QUOTA_SUMMARY_URL, token)
+        """Queries :retrieveUserQuotaSummary endpoint with fallback and auto-refresh on 401."""
+        try:
+            token = self.auth_provider.get_access_token(force_refresh=force_refresh)
+            return self._fetch_with_fallback(API_QUOTA_SUMMARY_URL, API_FALLBACK_QUOTA_SUMMARY_URL, token)
+        except ClientAuthError:
+            logger.info("Access token rejected (401), reloading from GNOME Keyring...")
+            token = self.auth_provider.get_access_token(force_refresh=True)
+            return self._fetch_with_fallback(API_QUOTA_SUMMARY_URL, API_FALLBACK_QUOTA_SUMMARY_URL, token)
+
+    def _fetch_with_fallback(self, primary_url: str, fallback_url: str, token: str) -> Dict[str, Any]:
+        try:
+            return self._post_json(primary_url, token)
+        except (ClientNetworkError, ClientError) as e:
+            if isinstance(e, (ClientAuthError, ClientRateLimitError)):
+                raise
+            logger.debug("Primary endpoint failed (%s), trying fallback: %s", e, fallback_url)
+            return self._post_json(fallback_url, token)
 
     def _post_json(self, url: str, token: str, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         req_data = json.dumps(body or {}).encode("utf-8")
@@ -65,6 +89,7 @@ class AntigravityClient:
                 return json.loads(raw)
         except urllib.error.HTTPError as e:
             if e.code == 401 or e.code == 403:
+                self.auth_provider.invalidate_cache()
                 raise ClientAuthError(f"HTTP {e.code}: Authentication token rejected or expired.")
             elif e.code == 429:
                 raise ClientRateLimitError(f"HTTP 429: Quota endpoint rate limited.")

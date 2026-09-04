@@ -110,7 +110,10 @@ class QuotaService:
 
                 logger.info(
                     "Quota refreshed successfully. Lowest: %.1f%%",
-                    snapshot.get_display_percentage(self.settings.display_mode),
+                    snapshot.get_display_percentage(
+                        mode=self.settings.display_mode,
+                        selected_model_id=self.settings.selected_model_override,
+                    ),
                 )
 
             except ClientAuthError as e:

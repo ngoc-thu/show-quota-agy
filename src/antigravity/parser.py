@@ -25,6 +25,20 @@ def parse_iso_datetime(dt_str: Optional[str]) -> Optional[datetime]:
         return None
 
 
+def format_model_display_name(model_id: str, raw_name: Optional[str]) -> str:
+    name = raw_name or model_id
+    if name == model_id or name.lower() == model_id.lower():
+        if "gemini-3.8-flash" in model_id:
+            return "Gemini 3.8 Flash"
+        elif "gemini-3.7-flash" in model_id:
+            return "Gemini 3.7 Flash"
+        elif "gemini-3.6-flash" in model_id:
+            return "Gemini 3.6 Flash"
+        elif "gemini-3-flash" in model_id:
+            return "Gemini 3 Flash"
+    return name
+
+
 def categorize_model(model_id: str, display_name: str) -> str:
     name_lower = (model_id + " " + display_name).lower()
     if "claude" in name_lower:
@@ -53,7 +67,8 @@ def parse_quota_response(
 
     for model_id, mdata in raw_models.items():
         # Filter out purely internal/empty test slots if needed, or include all user-facing
-        display_name = mdata.get("displayName", model_id)
+        raw_display_name = mdata.get("displayName", model_id)
+        display_name = format_model_display_name(model_id, raw_display_name)
         quota_data = mdata.get("quotaInfo", {})
 
         rem_frac = quota_data.get("remainingFraction")

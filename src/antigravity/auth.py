@@ -25,10 +25,18 @@ class AntigravityAuthProvider:
         self._cached_expiry: Optional[datetime] = None
         self._auth_method: Optional[str] = None
 
+    def invalidate_cache(self):
+        """Clears cached token so next call reloads from Secret Service."""
+        self._cached_token = None
+        self._cached_expiry = None
+
     def get_access_token(self, force_refresh: bool = False) -> str:
         """Retrieves a valid access token, extracting from Secret Service or refreshing if needed."""
+        if force_refresh:
+            self.invalidate_cache()
+
         # Check cache if not forcing refresh
-        if not force_refresh and self._cached_token and self._cached_expiry:
+        if self._cached_token and self._cached_expiry:
             now = datetime.now(timezone.utc)
             # If token has at least 60 seconds of validity remaining
             if (self._cached_expiry - now).total_seconds() > 60:
@@ -46,19 +54,18 @@ class AntigravityAuthProvider:
         if expiry_str:
             try:
                 # Format: 2026-08-21T17:39:28.948475876+07:00 or ISO format
-                # Python 3.11+ fromisoformat handles fractional seconds and offsets
-                clean_expiry = expiry_str.split("+")[0].split("Z")[0]
-                if "." in clean_expiry and len(clean_expiry.split(".")[1]) > 6:
-                    # Truncate nanoseconds to microseconds
-                    base, nano = clean_expiry.split(".")
-                    clean_expiry = f"{base}.{nano[:6]}"
-                self._cached_expiry = datetime.fromisoformat(clean_expiry).replace(tzinfo=timezone.utc)
+                # Python fromisoformat requires microseconds (up to 6 digits)
+                import re
+                clean_expiry = re.sub(r'(\.\d{6})\d+', r'\1', expiry_str)
+                dt = datetime.fromisoformat(clean_expiry)
+                self._cached_expiry = dt.astimezone(timezone.utc)
             except Exception as e:
                 logger.debug("Could not parse token expiry timestamp %s: %s", expiry_str, e)
                 self._cached_expiry = None
 
         self._cached_token = access_token
-        logger.debug("Successfully loaded Antigravity token from Keyring.")
+        logger.debug("Successfully loaded Antigravity token from Keyring (expires in %.0f min).",
+                     (self._cached_expiry - datetime.now(timezone.utc)).total_seconds() / 60 if self._cached_expiry else 0)
         return access_token
 
     def _load_from_secret_service(self) -> Tuple[Dict[str, Any], str]:

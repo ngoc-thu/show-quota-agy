@@ -21,10 +21,17 @@ ASSETS_DIR = PROJECT_ROOT / "assets"
 ICON_PATH = ASSETS_DIR / "icons" / "antigravity-quota-monitor.svg"
 
 # API Endpoints
-API_BASE_URL = "https://cloudcode-pa.googleapis.com/v1internal"
+# Antigravity CLI and IDE use daily-cloudcode-pa.googleapis.com as the active endpoint on Linux
+API_BASE_URL = "https://daily-cloudcode-pa.googleapis.com/v1internal"
+API_FALLBACK_BASE_URL = "https://cloudcode-pa.googleapis.com/v1internal"
+
 API_FETCH_MODELS_URL = f"{API_BASE_URL}:fetchAvailableModels"
 API_QUOTA_SUMMARY_URL = f"{API_BASE_URL}:retrieveUserQuotaSummary"
 API_RETRIEVE_QUOTA_URL = f"{API_BASE_URL}:retrieveUserQuota"
+
+API_FALLBACK_FETCH_MODELS_URL = f"{API_FALLBACK_BASE_URL}:fetchAvailableModels"
+API_FALLBACK_QUOTA_SUMMARY_URL = f"{API_FALLBACK_BASE_URL}:retrieveUserQuotaSummary"
+API_FALLBACK_RETRIEVE_QUOTA_URL = f"{API_FALLBACK_BASE_URL}:retrieveUserQuota"
 
 # Secret Service Keyring constants
 KEYRING_SERVICE = "gemini"
